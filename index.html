@@ -66,7 +66,7 @@ const msgDiv = document.getElementById("chatMessages"), inp = document.getElemen
 function add(role, text, html=0){ let d=document.createElement("div"); d.className=`message ${role}`; let b=document.createElement("div"); b.className="bubble"; if(html) b.innerHTML=text; else b.innerText=text; d.appendChild(b); msgDiv.appendChild(d); msgDiv.scrollTop=msgDiv.scrollHeight; }
 
 // ======================== LLAMADA A GROQ VIA WORKER ========================
-const WORKER_URL = 'https://med-ai-proxy.dianaml76.workers.dev//api/suggest';  // ¡CAMBIA ESTO por tu URL real!
+const WORKER_URL = 'https://med-ai-proxy.dianaml76.workers.dev/api/suggest';  // ¡CAMBIA ESTO por tu URL real!
 
 async function callGroqForSpecialty(symptom, sex, age) {
     try {
