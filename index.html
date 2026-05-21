@@ -16,9 +16,10 @@
     <footer>💰 Precios simulados · Básico (pagas 40%) · Estándar (25%) · Premium (10%)</footer>
 </div>
 <script>
-// ======================== BASE DE CONOCIMIENTO (FALLBACK LOCAL) ========================
+// ======================== BASE DE CONOCIMIENTO LOCAL (FALLBACK) ========================
 const specialities = [
     { esp:"Alergología", kw:["alergia","estornudos","goteo nasal","congestión nasal","ojos llorosos","urticaria","ronchas","camarones","mariscos","comí"], peso:4 },
+    { esp:"Traumatología", kw:["hueso","fractura","esguince","dislocación","luxación","dolor lumbar","ciática","hernia discal","rodilla","hombro","muñeca","tobillo","columna","artritis","artrosis","tendinitis","bursitis","menisco","ligamento","dolor de espalda","dolor de cuello","dolor de hombro","caída","golpe","hueso roto","fisura"], peso:3 },
     { esp:"Urología", kw:["testículos","dolor testicular","orinar","dificultad para orinar","próstata"], peso:3 },
     { esp:"Ginecología", kw:["períodos irregulares","infección vaginal","picazón vaginal","secreción anormal","mamas","seno"], peso:3 },
     { esp:"Cardiología", kw:["taquicardia","palpitaciones","corazón acelerado","dolor pecho","presión alta"], peso:3 },
@@ -51,12 +52,12 @@ function suggestSpecialtyLocal(symptom, sex, age){
     return esp;
 }
 
-// ======================== PLANES Y HOSPITALES ========================
+// ======================== PLANES Y HOSPITALES (con Traumatología incluida) ========================
 const planes = {"Plan Básico":{c:0.6,l:"Básico (pagas 40%)"},"Plan Estándar":{c:0.75,l:"Estándar (pagas 25%)"},"Plan Premium":{c:0.9,l:"Premium (pagas 10%)"}};
 const hosp = {
-    "Hospital Norte":{ "Medicina General":45,"Neurología":60,"Odontología":40,"Otorrinolaringología":55,"Neumología":55,"Cardiología":60,"Gastroenterología":58,"Dermatología":55,"Psiquiatría":55,"Psicología":50,"Urología":55,"Ginecología":55,"Endocrinología":58,"Infectología":56,"Alergología":60 },
-    "Hospital Centro":{ "Medicina General":40,"Neurología":55,"Odontología":35,"Otorrinolaringología":50,"Neumología":50,"Cardiología":55,"Gastroenterología":52,"Dermatología":50,"Psiquiatría":50,"Psicología":45,"Urología":50,"Ginecología":50,"Endocrinología":52,"Infectología":52,"Alergología":50 },
-    "Hospital Sur":{ "Medicina General":42,"Neurología":58,"Odontología":38,"Otorrinolaringología":52,"Neumología":52,"Cardiología":58,"Gastroenterología":55,"Dermatología":52,"Psiquiatría":52,"Psicología":47,"Urología":52,"Ginecología":52,"Endocrinología":55,"Infectología":54,"Alergología":55 }
+    "Hospital Norte":{ "Medicina General":45,"Neurología":60,"Odontología":40,"Otorrinolaringología":55,"Neumología":55,"Cardiología":60,"Gastroenterología":58,"Dermatología":55,"Psiquiatría":55,"Psicología":50,"Urología":55,"Ginecología":55,"Endocrinología":58,"Infectología":56,"Alergología":60,"Traumatología":60 },
+    "Hospital Centro":{ "Medicina General":40,"Neurología":55,"Odontología":35,"Otorrinolaringología":50,"Neumología":50,"Cardiología":55,"Gastroenterología":52,"Dermatología":50,"Psiquiatría":50,"Psicología":45,"Urología":50,"Ginecología":50,"Endocrinología":52,"Infectología":52,"Alergología":50,"Traumatología":55 },
+    "Hospital Sur":{ "Medicina General":42,"Neurología":58,"Odontología":38,"Otorrinolaringología":52,"Neumología":52,"Cardiología":58,"Gastroenterología":55,"Dermatología":52,"Psiquiatría":52,"Psicología":47,"Urología":52,"Ginecología":52,"Endocrinología":55,"Infectología":54,"Alergología":55,"Traumatología":58 }
 };
 
 // ======================== ESTADO Y UI ========================
@@ -66,7 +67,7 @@ const msgDiv = document.getElementById("chatMessages"), inp = document.getElemen
 function add(role, text, html=0){ let d=document.createElement("div"); d.className=`message ${role}`; let b=document.createElement("div"); b.className="bubble"; if(html) b.innerHTML=text; else b.innerText=text; d.appendChild(b); msgDiv.appendChild(d); msgDiv.scrollTop=msgDiv.scrollHeight; }
 
 // ======================== LLAMADA A GROQ VIA WORKER ========================
-const WORKER_URL = 'https://med-ai-proxy.dianaml76.workers.dev/api/suggest';  // ¡CAMBIA ESTO por tu URL real!
+const WORKER_URL = 'https://med-ai-proxy.dianaml76.workers.dev/api/suggest';  // ← TU URL DEL WORKER (ya está correcta)
 
 async function callGroqForSpecialty(symptom, sex, age) {
     try {
