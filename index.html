@@ -152,7 +152,6 @@
             border: 1px solid var(--assistant-bubble-border);
             border-bottom-left-radius: 8px;
         }
-        /* Mensajes de estado (éxito, advertencia, error) se añadirán mediante clases */
         .message.success .bubble {
             background: var(--secondary-light);
             color: var(--secondary-green);
@@ -254,7 +253,6 @@
             .plan-btn { padding: 6px 14px; font-size: 0.75rem; }
             .chat-header h1 { font-size: 1.2rem; }
         }
-        /* Estilo para íconos inline */
         .status-icon { display: inline-block; margin-right: 6px; font-weight: bold; }
     </style>
 </head>
@@ -266,7 +264,7 @@
     </div>
     <div class="messages" id="chatMessages">
         <div class="message assistant">
-            <div class="bubble">👋 Hola. Cuéntame tu síntoma principal. Usaré IA para sugerir la especialidad.<br>💡 Ej: mareos, dolor de cabeza, dolor de rodilla, ronchas por camarones.</div>
+            <div class="bubble">👋 Hola. Cuéntame tu síntoma principal. Usaré Vitalia para sugerir la especialidad.<br>💡 Ej: mareos, dolor de cabeza, dolor de rodilla, ronchas por camarones.</div>
         </div>
     </div>
     <div class="input-area">
@@ -274,11 +272,11 @@
         <button id="sendBtn">Enviar</button>
         <button id="resetBtn" class="reset-btn">↻ Nueva consulta</button>
     </div>
-    <footer>💰 Copago según plan · Básico (pagas 40%) · Estándar (25%) · Premium (10%) · IA con Groq</footer>
+    <footer>💰 Copago según plan · Básico (pagas 40%) · Estándar (25%) · Premium (10%) · IA con Vitalia</footer>
 </div>
 
 <script>
-// ======================== MODO OSCURO ========================
+// ========== MODO OSCURO ==========
 const darkModeToggle = document.getElementById('darkModeToggle');
 if (localStorage.getItem('darkMode') === 'enabled') {
     document.body.classList.add('dark');
@@ -291,7 +289,7 @@ darkModeToggle.addEventListener('click', () => {
     darkModeToggle.textContent = isDark ? '☀️ Modo claro' : '🌙 Modo oscuro';
 });
 
-// ======================== BASE LOCAL (FALLBACK) MEJORADA ========================
+// ========== BASE LOCAL (FALLBACK) MEJORADA ==========
 const specialities = [
     { esp:"Neurología", kw:["mareos","vértigo","inestabilidad","pérdida de equilibrio","náuseas","vómito","pesadez cabeza","cabeza pesada","dolor cabeza","migraña","debilidad pierna","debilidad brazo","pierna izquierda","pierna derecha","brazo izquierdo","dificultad mover","parálisis","entumecimiento","hormigueo","temblor","convulsiones","desmayo","confusión","habla arrastrada","visión doble"], peso:4 },
     { esp:"Alergología", kw:["alergia","estornudos","goteo nasal","congestión nasal","ojos llorosos","urticaria","ronchas","camarones","mariscos","comí"], peso:4 },
@@ -316,7 +314,6 @@ function suggestSpecialtyLocal(symptom, sex, age) {
         if (score > best.score) best = { esp:s.esp, score };
     }
     let esp = best.esp;
-    // Refinamientos
     if (esp === "Gastroenterología" && lower.includes("dolor abdominal")) {
         if (sex === "femenino") esp = "Ginecología";
         else if (sex === "masculino" && age > 50) esp = "Urología";
@@ -330,7 +327,7 @@ function suggestSpecialtyLocal(symptom, sex, age) {
     return esp;
 }
 
-// ======================== PLANES Y HOSPITALES ========================
+// ========== PLANES Y HOSPITALES ==========
 const planes = {
     "Plan Básico": { c: 0.60, l: "Básico (pagas 40%)" },
     "Plan Estándar": { c: 0.75, l: "Estándar (pagas 25%)" },
@@ -342,7 +339,7 @@ const hosp = {
     "Hospital Sur": { "Medicina General":42, "Neurología":58, "Odontología":38, "Otorrinolaringología":52, "Neumología":52, "Cardiología":58, "Gastroenterología":55, "Dermatología":52, "Psiquiatría":52, "Psicología":47, "Urología":52, "Ginecología":52, "Endocrinología":55, "Infectología":54, "Alergología":55, "Traumatología":58 }
 };
 
-// ======================== ESTADO Y UI ========================
+// ========== ESTADO Y UI ==========
 let state = { step: "symptom", symptom: "", sex: null, age: null, specialty: null, plan: null };
 const msgDiv = document.getElementById("chatMessages"), inp = document.getElementById("userInput"), sendBtn = document.getElementById("sendBtn"), resetBtn = document.getElementById("resetBtn");
 
@@ -364,9 +361,9 @@ function addStatusMessage(type, text) {
     addMessage("assistant", `<span class="status-icon">${icon}</span> ${text}`, true, className);
 }
 
-// ======================== LLAMADA A GROQ VIA WORKER ========================
+// ========== LLAMADA AL WORKER (VITALIA) ==========
 const WORKER_URL = 'https://med-ai-proxy.dianaml76.workers.dev/api/suggest';
-async function callGroqForSpecialty(symptom, sex, age) {
+async function callVitaliaForSpecialty(symptom, sex, age) {
     try {
         const response = await fetch(WORKER_URL, {
             method: 'POST',
@@ -378,12 +375,12 @@ async function callGroqForSpecialty(symptom, sex, age) {
         if (data.specialty && typeof data.specialty === 'string') return data.specialty;
         throw new Error('Respuesta inválida');
     } catch (error) {
-        console.error('Error Worker/Groq:', error);
+        console.error('Error con Vitalia:', error);
         return null;
     }
 }
 
-// ======================== LÓGICA DE COSTOS ========================
+// ========== LÓGICA DE COSTOS ==========
 function copago(cb, c) { return Math.round(cb * (1 - c)); }
 function ranking(esp, plan) {
     let p = planes[plan];
@@ -470,12 +467,12 @@ function processInput(raw) {
         if (!isNaN(ageNum) && ageNum > 0 && ageNum < 120) {
             state.age = ageNum;
             addMessage("user", text);
-            addMessage("assistant", "🤖 Consultando a la IA (Groq) para determinar la especialidad...");
-            callGroqForSpecialty(state.symptom, state.sex, state.age).then(iaSpecialty => {
+            addMessage("assistant", "🤖 Consultando a Vitalia...");
+            callVitaliaForSpecialty(state.symptom, state.sex, state.age).then(iaSpecialty => {
                 let final;
                 if (iaSpecialty && iaSpecialty !== "Medicina General" && iaSpecialty.length > 0) {
                     final = iaSpecialty;
-                    addStatusMessage("success", `🧠 IA (Groq) sugiere: <strong>${final}</strong>`);
+                    addStatusMessage("success", `🧠 Vitalia sugiere: <strong>${final}</strong>`);
                 } else {
                     final = suggestSpecialtyLocal(state.symptom, state.sex, state.age);
                     addStatusMessage("warning", `⚠️ Usando modo local. Especialidad: <strong>${final}</strong>`);
@@ -485,7 +482,7 @@ function processInput(raw) {
                 state.step = "waitingPlan";
             }).catch(() => {
                 let fallback = suggestSpecialtyLocal(state.symptom, state.sex, state.age);
-                addStatusMessage("error", `❌ Error con IA. Usando modo local. Especialidad: <strong>${fallback}</strong>`);
+                addStatusMessage("error", `❌ Error con Vitalia. Usando modo local. Especialidad: <strong>${fallback}</strong>`);
                 state.specialty = fallback;
                 renderPlanButtons();
                 state.step = "waitingPlan";
