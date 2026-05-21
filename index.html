@@ -2,77 +2,370 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistente Salud - Copago con IA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Asistente Salud con IA – Copago y Cobertura</title>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box}body{background:linear-gradient(145deg,#c0e0f5,#e9f4fb);font-family:system-ui,'Segoe UI',sans-serif;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}.chat{max-width:880px;width:100%;background:rgba(255,255,255,0.96);border-radius:40px;box-shadow:0 25px 45px -12px rgba(0,0,0,0.35);overflow:hidden;display:flex;flex-direction:column;height:85vh;max-height:820px}.chat-header{background:linear-gradient(135deg,#0a2f44,#0b3b5f);color:#fff;padding:22px 24px;text-align:center}.chat-header h1{font-size:1.7rem;display:flex;align-items:center;justify-content:center;gap:12px}.chat-header p{font-size:.85rem;opacity:.85;margin-top:6px}.messages{flex:1;overflow-y:auto;padding:24px 20px;display:flex;flex-direction:column;gap:18px;background:#f9fdfe}.message{display:flex;max-width:82%;animation:fadeInUp .2s ease}.message.user{align-self:flex-end}.message.assistant{align-self:flex-start}.bubble{padding:12px 18px;border-radius:28px;line-height:1.45;font-size:.95rem}.user .bubble{background:#0b3b5f;color:#fff;border-bottom-right-radius:8px;background-image:linear-gradient(145deg,#0f466b,#0b3b5f)}.assistant .bubble{background:#fff;color:#1a2c3e;border:1px solid #dee4e9;border-bottom-left-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.05)}.input-area{padding:16px 20px 22px;background:#fff;border-top:1px solid #e2edf2;display:flex;gap:12px;flex-wrap:wrap}.input-area input{flex:1;padding:14px 20px;border:1px solid #cfdfe8;border-radius:60px;font-size:1rem}.input-area input:focus{outline:none;border-color:#0b3b5f;box-shadow:0 0 0 3px rgba(11,59,95,0.2)}.input-area button{background:linear-gradient(145deg,#0b3b5f,#0a2f4a);border:none;padding:0 28px;border-radius:60px;font-weight:600;color:#fff;cursor:pointer;transition:.2s;box-shadow:0 4px 8px rgba(0,0,0,0.1)}.input-area button:hover{transform:translateY(-2px);background:linear-gradient(145deg,#0f4c75,#0b3b5f)}.input-area .reset-btn{background:#e9ecef;color:#0b3b5f;box-shadow:none;border:1px solid #cfdfe8}.input-area .reset-btn:hover{background:#dee2e6;transform:translateY(-2px)}.plan-buttons{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap}.plan-btn{background:#ecf3f8;border:none;padding:10px 22px;border-radius:60px;font-weight:600;cursor:pointer;transition:.2s;color:#0b3b5f;box-shadow:0 2px 4px rgba(0,0,0,0.05)}.plan-btn:hover{background:#dee9f0;transform:translateY(-2px)}footer{font-size:.7rem;text-align:center;padding:12px;background:#fff;border-top:1px solid #e9f0f3;color:#5f7f9c}@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@media(max-width:560px){.message{max-width:95%}.chat{height:95vh}.plan-btn{padding:6px 14px;font-size:.75rem}}
+        /* ========== VARIABLES DE COLOR (MODO CLARO POR DEFECTO) ========== */
+        :root {
+            --primary-blue: #2A6F9E;
+            --primary-dark: #1E5A7F;
+            --secondary-green: #2E9F7A;
+            --secondary-light: #E0F2E9;
+            --bg-body: #F7F9FB;
+            --bg-chat: #FFFFFF;
+            --text-primary: #0F1724;
+            --text-secondary: #4A5568;
+            --warning: #E7B800;
+            --warning-light: #FEF4E6;
+            --error: #D64545;
+            --error-light: #FCE8E8;
+            --accent-soft: #A9D6E5;
+            --border-light: #E2E8F0;
+            --header-gradient-start: #1E5A7F;
+            --header-gradient-end: #2A6F9E;
+            --assistant-bubble-bg: #FFFFFF;
+            --assistant-bubble-border: #E2E8F0;
+            --user-bubble-bg: #2A6F9E;
+            --user-bubble-gradient: linear-gradient(145deg, #2A6F9E, #1E5A7F);
+            --plan-btn-bg: #ECF3F8;
+            --plan-btn-text: #2A6F9E;
+            --reset-btn-bg: #ECF3F8;
+            --reset-btn-border: #CFDFE8;
+            --footer-text: #5F7F9C;
+        }
+        /* ========== MODO OSCURO ========== */
+        body.dark {
+            --primary-blue: #5B9BC7;
+            --primary-dark: #3A7BA0;
+            --secondary-green: #4DB38E;
+            --secondary-light: #1A3A2E;
+            --bg-body: #121826;
+            --bg-chat: #1A202C;
+            --text-primary: #EDF2F7;
+            --text-secondary: #A0AEC0;
+            --warning: #F5C542;
+            --warning-light: #3A3410;
+            --error: #E57373;
+            --error-light: #3C1E1E;
+            --accent-soft: #2B5C74;
+            --border-light: #2D3748;
+            --header-gradient-start: #0F2A3B;
+            --header-gradient-end: #1E4A6F;
+            --assistant-bubble-bg: #2D3748;
+            --assistant-bubble-border: #4A5568;
+            --user-bubble-bg: #2A6F9E;
+            --user-bubble-gradient: linear-gradient(145deg, #3A7BA0, #1E5A7F);
+            --plan-btn-bg: #2D3748;
+            --plan-btn-text: #A9D6E5;
+            --reset-btn-bg: #2D3748;
+            --reset-btn-border: #4A5568;
+            --footer-text: #718096;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-body);
+            font-family: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .chat {
+            max-width: 880px;
+            width: 100%;
+            background: var(--bg-chat);
+            border-radius: 40px;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.35);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 85vh;
+            max-height: 820px;
+            transition: background 0.2s;
+        }
+        .chat-header {
+            background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end));
+            color: white;
+            padding: 22px 24px;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .chat-header h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .theme-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 40px;
+            padding: 8px 16px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.02);
+        }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            background: var(--bg-chat);
+        }
+        .message {
+            display: flex;
+            max-width: 85%;
+            animation: fadeInUp 0.2s ease;
+        }
+        .message.user { align-self: flex-end; }
+        .message.assistant { align-self: flex-start; }
+        .bubble {
+            padding: 12px 18px;
+            border-radius: 28px;
+            line-height: 1.45;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .user .bubble {
+            background: var(--user-bubble-bg);
+            background-image: var(--user-bubble-gradient);
+            color: white;
+            border-bottom-right-radius: 8px;
+        }
+        .assistant .bubble {
+            background: var(--assistant-bubble-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--assistant-bubble-border);
+            border-bottom-left-radius: 8px;
+        }
+        /* Mensajes de estado (éxito, advertencia, error) se añadirán mediante clases */
+        .message.success .bubble {
+            background: var(--secondary-light);
+            color: var(--secondary-green);
+            border-left: 4px solid var(--secondary-green);
+            border-bottom-left-radius: 8px;
+        }
+        .message.warning .bubble {
+            background: var(--warning-light);
+            color: #C49A1A;
+            border-left: 4px solid var(--warning);
+        }
+        .message.error .bubble {
+            background: var(--error-light);
+            color: var(--error);
+            border-left: 4px solid var(--error);
+        }
+        .input-area {
+            padding: 16px 20px 22px;
+            background: var(--bg-chat);
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .input-area input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 1px solid var(--border-light);
+            border-radius: 60px;
+            font-size: 1rem;
+            background: var(--bg-chat);
+            color: var(--text-primary);
+            transition: 0.2s;
+        }
+        .input-area input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(42,111,158,0.2);
+        }
+        .input-area button {
+            background: linear-gradient(145deg, var(--primary-blue), var(--primary-dark));
+            border: none;
+            padding: 0 28px;
+            border-radius: 60px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .input-area button:hover { transform: translateY(-2px); opacity: 0.95; }
+        .input-area .reset-btn {
+            background: var(--reset-btn-bg);
+            color: var(--primary-blue);
+            box-shadow: none;
+            border: 1px solid var(--reset-btn-border);
+        }
+        .input-area .reset-btn:hover {
+            background: var(--border-light);
+            transform: translateY(-2px);
+        }
+        .plan-buttons {
+            display: flex;
+            gap: 14px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+        .plan-btn {
+            background: var(--plan-btn-bg);
+            border: none;
+            padding: 10px 22px;
+            border-radius: 60px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            color: var(--plan-btn-text);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .plan-btn:hover {
+            background: var(--accent-soft);
+            transform: translateY(-2px);
+        }
+        footer {
+            font-size: 0.7rem;
+            text-align: center;
+            padding: 12px;
+            background: var(--bg-chat);
+            border-top: 1px solid var(--border-light);
+            color: var(--footer-text);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @media (max-width: 560px) {
+            .message { max-width: 95%; }
+            .chat { height: 95vh; }
+            .plan-btn { padding: 6px 14px; font-size: 0.75rem; }
+            .chat-header h1 { font-size: 1.2rem; }
+        }
+        /* Estilo para íconos inline */
+        .status-icon { display: inline-block; margin-right: 6px; font-weight: bold; }
     </style>
 </head>
 <body>
 <div class="chat">
-    <div class="chat-header"><h1>🏥 Asistente de Salud con IA</h1><p>🔎 Copago exacto | 🏨 Hospital más económico</p></div>
-    <div class="messages" id="chatMessages"><div class="message assistant"><div class="bubble">👋 Hola. Cuéntame tu síntoma principal. Usaré IA para sugerir la especialidad.</div></div></div>
+    <div class="chat-header">
+        <h1>🏥 Asistente de Salud con IA</h1>
+        <button id="darkModeToggle" class="theme-toggle">🌙 Modo oscuro</button>
+    </div>
+    <div class="messages" id="chatMessages">
+        <div class="message assistant">
+            <div class="bubble">👋 Hola. Cuéntame tu síntoma principal. Usaré IA para sugerir la especialidad.<br>💡 Ej: mareos, dolor de cabeza, dolor de rodilla, ronchas por camarones.</div>
+        </div>
+    </div>
     <div class="input-area">
         <input type="text" id="userInput" placeholder="Escribe tu síntoma...">
         <button id="sendBtn">Enviar</button>
         <button id="resetBtn" class="reset-btn">↻ Nueva consulta</button>
     </div>
-    <footer>💰 Precios simulados · Básico (pagas 40%) · Estándar (25%) · Premium (10%)</footer>
+    <footer>💰 Copago según plan · Básico (pagas 40%) · Estándar (25%) · Premium (10%) · IA con Groq</footer>
 </div>
+
 <script>
-// ======================== BASE DE CONOCIMIENTO LOCAL (FALLBACK) ========================
+// ======================== MODO OSCURO ========================
+const darkModeToggle = document.getElementById('darkModeToggle');
+if (localStorage.getItem('darkMode') === 'enabled') {
+    document.body.classList.add('dark');
+    darkModeToggle.textContent = '☀️ Modo claro';
+}
+darkModeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    const isDark = document.body.classList.contains('dark');
+    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
+    darkModeToggle.textContent = isDark ? '☀️ Modo claro' : '🌙 Modo oscuro';
+});
+
+// ======================== BASE LOCAL (FALLBACK) MEJORADA ========================
 const specialities = [
+    { esp:"Neurología", kw:["mareos","vértigo","inestabilidad","pérdida de equilibrio","náuseas","vómito","pesadez cabeza","cabeza pesada","dolor cabeza","migraña","debilidad pierna","debilidad brazo","pierna izquierda","pierna derecha","brazo izquierdo","dificultad mover","parálisis","entumecimiento","hormigueo","temblor","convulsiones","desmayo","confusión","habla arrastrada","visión doble"], peso:4 },
     { esp:"Alergología", kw:["alergia","estornudos","goteo nasal","congestión nasal","ojos llorosos","urticaria","ronchas","camarones","mariscos","comí"], peso:4 },
-    { esp:"Traumatología", kw:["hueso","fractura","esguince","dislocación","luxación","dolor lumbar","ciática","hernia discal","rodilla","hombro","muñeca","tobillo","columna","artritis","artrosis","tendinitis","bursitis","menisco","ligamento","dolor de espalda","dolor de cuello","dolor de hombro","caída","golpe","hueso roto","fisura"], peso:3 },
+    { esp:"Traumatología", kw:["hueso","fractura","esguince","dislocación","dolor lumbar","ciática","hernia discal","rodilla","hombro","muñeca","tobillo","columna","artritis","artrosis","tendinitis","menisco","ligamento","dolor espalda","caída","golpe"], peso:3 },
     { esp:"Urología", kw:["testículos","dolor testicular","orinar","dificultad para orinar","próstata"], peso:3 },
     { esp:"Ginecología", kw:["períodos irregulares","infección vaginal","picazón vaginal","secreción anormal","mamas","seno"], peso:3 },
     { esp:"Cardiología", kw:["taquicardia","palpitaciones","corazón acelerado","dolor pecho","presión alta"], peso:3 },
-    { esp:"Psiquiatría", kw:["problemas de sueño","insomnio","tristeza persistente","ansiedad excesiva","pensamientos suicidas"], peso:3 },
+    { esp:"Psiquiatría", kw:["problemas sueño","insomnio","tristeza persistente","ansiedad excesiva","pensamientos suicidas"], peso:3 },
     { esp:"Psicología", kw:["apatía","falta interés","baja autoestima","culpa","fobia"], peso:2 },
     { esp:"Otorrinolaringología", kw:["dolor oído","infección oído","congestión nasal","resfriado"], peso:2 },
-    { esp:"Neurología", kw:["dolor cabeza","migraña","vértigo","hormigueo","convulsiones"], peso:2 },
     { esp:"Dermatología", kw:["piel","erupción","sarpullido","acné","granos"], peso:2 },
     { esp:"Gastroenterología", kw:["dolor abdominal","reflujo","acidez","diarrea","estreñimiento"], peso:2 },
     { esp:"Neumología", kw:["tos","expectoración","falta aire","sibilancias"], peso:2 },
     { esp:"Medicina General", kw:["fiebre","calentura","cansancio","fatiga","dolor general"], peso:1 }
 ];
-function suggestSpecialtyLocal(symptom, sex, age){
+function suggestSpecialtyLocal(symptom, sex, age) {
     let lower = symptom.toLowerCase();
     let best = { esp:"Medicina General", score:0 };
-    for(let s of specialities){
+    for (let s of specialities) {
         let score = 0;
-        for(let kw of s.kw) if(lower.includes(kw)) score += s.peso;
-        if(score > best.score) best = { esp:s.esp, score };
+        for (let kw of s.kw) if (lower.includes(kw)) score += s.peso;
+        if (score > best.score) best = { esp:s.esp, score };
     }
     let esp = best.esp;
-    if(esp==="Gastroenterología" && lower.includes("dolor abdominal")){
-        if(sex==="femenino") esp = "Ginecología";
-        else if(sex==="masculino" && age>50) esp = "Urología";
+    // Refinamientos
+    if (esp === "Gastroenterología" && lower.includes("dolor abdominal")) {
+        if (sex === "femenino") esp = "Ginecología";
+        else if (sex === "masculino" && age > 50) esp = "Urología";
     }
-    if(esp==="Medicina General" && (lower.includes("fatiga")||lower.includes("cansancio")) && age>60) esp = "Cardiología";
-    if(lower.includes("testículos")||lower.includes("dificultad para orinar")) esp = "Urología";
-    if(lower.includes("taquicardia")||lower.includes("palpitaciones")) esp = "Cardiología";
-    if((lower.includes("ronchas")||lower.includes("urticaria")) && (lower.includes("camarones")||lower.includes("mariscos"))) esp = "Alergología";
+    if (esp === "Medicina General" && (lower.includes("fatiga") || lower.includes("cansancio")) && age > 60) esp = "Cardiología";
+    if (lower.includes("testículos") || lower.includes("dificultad para orinar")) esp = "Urología";
+    if (lower.includes("taquicardia") || lower.includes("palpitaciones")) esp = "Cardiología";
+    if ((lower.includes("ronchas") || lower.includes("urticaria")) && (lower.includes("camarones") || lower.includes("mariscos"))) esp = "Alergología";
+    if ((lower.includes("mareos") || lower.includes("vértigo")) && (lower.includes("debilidad") || lower.includes("pierna") || lower.includes("brazo"))) esp = "Neurología";
+    if (lower.includes("pesadez cabeza") || lower.includes("cabeza pesada")) esp = "Neurología";
     return esp;
 }
 
-// ======================== PLANES Y HOSPITALES (con Traumatología) ========================
-const planes = {"Plan Básico":{c:0.6,l:"Básico (pagas 40%)"},"Plan Estándar":{c:0.75,l:"Estándar (pagas 25%)"},"Plan Premium":{c:0.9,l:"Premium (pagas 10%)"}};
+// ======================== PLANES Y HOSPITALES ========================
+const planes = {
+    "Plan Básico": { c: 0.60, l: "Básico (pagas 40%)" },
+    "Plan Estándar": { c: 0.75, l: "Estándar (pagas 25%)" },
+    "Plan Premium": { c: 0.90, l: "Premium (pagas 10%)" }
+};
 const hosp = {
-    "Hospital Norte":{ "Medicina General":45,"Neurología":60,"Odontología":40,"Otorrinolaringología":55,"Neumología":55,"Cardiología":60,"Gastroenterología":58,"Dermatología":55,"Psiquiatría":55,"Psicología":50,"Urología":55,"Ginecología":55,"Endocrinología":58,"Infectología":56,"Alergología":60,"Traumatología":60 },
-    "Hospital Centro":{ "Medicina General":40,"Neurología":55,"Odontología":35,"Otorrinolaringología":50,"Neumología":50,"Cardiología":55,"Gastroenterología":52,"Dermatología":50,"Psiquiatría":50,"Psicología":45,"Urología":50,"Ginecología":50,"Endocrinología":52,"Infectología":52,"Alergología":50,"Traumatología":55 },
-    "Hospital Sur":{ "Medicina General":42,"Neurología":58,"Odontología":38,"Otorrinolaringología":52,"Neumología":52,"Cardiología":58,"Gastroenterología":55,"Dermatología":52,"Psiquiatría":52,"Psicología":47,"Urología":52,"Ginecología":52,"Endocrinología":55,"Infectología":54,"Alergología":55,"Traumatología":58 }
+    "Hospital Norte": { "Medicina General":45, "Neurología":60, "Odontología":40, "Otorrinolaringología":55, "Neumología":55, "Cardiología":60, "Gastroenterología":58, "Dermatología":55, "Psiquiatría":55, "Psicología":50, "Urología":55, "Ginecología":55, "Endocrinología":58, "Infectología":56, "Alergología":60, "Traumatología":60 },
+    "Hospital Centro": { "Medicina General":40, "Neurología":55, "Odontología":35, "Otorrinolaringología":50, "Neumología":50, "Cardiología":55, "Gastroenterología":52, "Dermatología":50, "Psiquiatría":50, "Psicología":45, "Urología":50, "Ginecología":50, "Endocrinología":52, "Infectología":52, "Alergología":50, "Traumatología":55 },
+    "Hospital Sur": { "Medicina General":42, "Neurología":58, "Odontología":38, "Otorrinolaringología":52, "Neumología":52, "Cardiología":58, "Gastroenterología":55, "Dermatología":52, "Psiquiatría":52, "Psicología":47, "Urología":52, "Ginecología":52, "Endocrinología":55, "Infectología":54, "Alergología":55, "Traumatología":58 }
 };
 
 // ======================== ESTADO Y UI ========================
-let state = { step:"symptom", symptom:"", sex:null, age:null, specialty:null, plan:null };
+let state = { step: "symptom", symptom: "", sex: null, age: null, specialty: null, plan: null };
 const msgDiv = document.getElementById("chatMessages"), inp = document.getElementById("userInput"), sendBtn = document.getElementById("sendBtn"), resetBtn = document.getElementById("resetBtn");
 
-function add(role, text, html=0){ let d=document.createElement("div"); d.className=`message ${role}`; let b=document.createElement("div"); b.className="bubble"; if(html) b.innerHTML=text; else b.innerText=text; d.appendChild(b); msgDiv.appendChild(d); msgDiv.scrollTop=msgDiv.scrollHeight; }
+function addMessage(role, text, isHtml = false, customClass = "") {
+    const div = document.createElement("div");
+    div.className = `message ${role}`;
+    if (customClass) div.classList.add(customClass);
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    if (isHtml) bubble.innerHTML = text;
+    else bubble.innerText = text;
+    div.appendChild(bubble);
+    msgDiv.appendChild(div);
+    msgDiv.scrollTop = msgDiv.scrollHeight;
+}
+function addStatusMessage(type, text) {
+    const icon = type === 'success' ? '✓' : (type === 'warning' ? '⚠️' : '❌');
+    const className = type === 'success' ? 'success' : (type === 'warning' ? 'warning' : 'error');
+    addMessage("assistant", `<span class="status-icon">${icon}</span> ${text}`, true, className);
+}
 
 // ======================== LLAMADA A GROQ VIA WORKER ========================
 const WORKER_URL = 'https://med-ai-proxy.dianaml76.workers.dev/api/suggest';
-
 async function callGroqForSpecialty(symptom, sex, age) {
     try {
         const response = await fetch(WORKER_URL, {
@@ -85,82 +378,140 @@ async function callGroqForSpecialty(symptom, sex, age) {
         if (data.specialty && typeof data.specialty === 'string') return data.specialty;
         throw new Error('Respuesta inválida');
     } catch (error) {
-        console.error('Error con Worker/Groq:', error);
+        console.error('Error Worker/Groq:', error);
         return null;
     }
 }
 
 // ======================== LÓGICA DE COSTOS ========================
-function copago(cb,c){ return Math.round(cb*(1-c)); }
-function ranking(esp,plan){ let p=planes[plan]; if(!p) return null; let r=[]; for(let[h,cs] of Object.entries(hosp)){ let cb=cs[esp]; if(cb) r.push({h,cb,cp:copago(cb,p.c)}); } if(!r.length) return null; r.sort((a,b)=>a.cp-b.cp); return {m:r[0],t:r}; }
-function showResults(){
-    if(!state.plan||!state.specialty) return;
-    let r=ranking(state.specialty,state.plan);
-    if(!r){ add("assistant",`Sin datos para "${state.specialty}". Escribe "nuevo".`); state.step="result"; return; }
-    let m=r.m, porc=planes[state.plan].c*100;
-    let html=`<strong>✅ ${state.plan}</strong> (cubre ${porc}%)<br><br>🏥 <strong>Más económico:</strong> ${m.h}<br>💰 <strong>Tu copago:</strong> $${m.cp}<br>📋 Costo base: $${m.cb}<br><br><strong>Comparativa red:</strong><br>`;
-    r.t.forEach(h=>{ html+=`• ${h.h}: copago $${h.cp} (base $${h.cb})<br>`; });
-    html+=`<br><em>💡 Presiona el botón "Nueva consulta" para reiniciar.</em>`;
-    add("assistant",html,1);
-    state.step="result";
+function copago(cb, c) { return Math.round(cb * (1 - c)); }
+function ranking(esp, plan) {
+    let p = planes[plan];
+    if (!p) return null;
+    let resultados = [];
+    for (let [h, cs] of Object.entries(hosp)) {
+        let cb = cs[esp];
+        if (cb) resultados.push({ hospital: h, costoBase: cb, copago: copago(cb, p.c) });
+    }
+    if (!resultados.length) return null;
+    resultados.sort((a, b) => a.copago - b.copago);
+    return { mejor: resultados[0], todos: resultados };
 }
-function renderPlanButtons(){
-    let c=document.createElement("div"); c.className="plan-buttons";
-    for(let[n,i] of Object.entries(planes)){ let b=document.createElement("button"); b.innerText=i.l; b.className="plan-btn"; b.onclick=()=>{ state.plan=n; add("user",`Seleccioné: ${i.l}`); showResults(); }; c.appendChild(b); }
-    let w=document.createElement("div"); w.className="message assistant"; let bu=document.createElement("div"); bu.className="bubble";
-    bu.appendChild(document.createTextNode("Elige tu plan: ")); bu.appendChild(c); w.appendChild(bu); msgDiv.appendChild(w); msgDiv.scrollTop=msgDiv.scrollHeight;
+function showResults() {
+    if (!state.plan || !state.specialty) return;
+    const rank = ranking(state.specialty, state.plan);
+    if (!rank) {
+        addStatusMessage("error", `No hay datos para "${state.specialty}". Usa "Nueva consulta".`);
+        state.step = "result";
+        return;
+    }
+    const mejor = rank.mejor;
+    const porcentaje = planes[state.plan].c * 100;
+    let html = `<strong>✅ ${state.plan}</strong> (cubre ${porcentaje}%)<br><br>`;
+    html += `🏥 <strong>Más económico:</strong> ${mejor.hospital}<br>`;
+    html += `💰 <strong>Tu copago:</strong> $${mejor.copago}<br>`;
+    html += `📋 Costo base: $${mejor.costoBase}<br><br>`;
+    html += `<strong>Comparativa red:</strong><br>`;
+    rank.todos.forEach(h => { html += `• ${h.hospital}: copago $${h.copago} (base $${h.costoBase})<br>`; });
+    html += `<br><em>💡 Presiona "Nueva consulta" para reiniciar.</em>`;
+    addMessage("assistant", html, true);
+    state.step = "result";
 }
-function askSex(){ add("assistant","📌 ¿Sexo biológico? (masculino / femenino)"); state.step="asking_sex"; }
-function askAge(){ add("assistant","📌 ¿Edad? (número)"); state.step="asking_age"; }
-function resetChat(){
-    state = { step:"symptom", symptom:"", sex:null, age:null, specialty:null, plan:null };
-    while(msgDiv.children.length > 1) msgDiv.removeChild(msgDiv.lastChild);
-    add("assistant","🔄 Conversación reiniciada. Cuéntame tu síntoma principal.");
+function renderPlanButtons() {
+    const container = document.createElement("div");
+    container.className = "plan-buttons";
+    for (let [nombre, info] of Object.entries(planes)) {
+        const btn = document.createElement("button");
+        btn.innerText = info.l;
+        btn.className = "plan-btn";
+        btn.onclick = () => {
+            state.plan = nombre;
+            addMessage("user", `Seleccioné: ${info.l}`);
+            showResults();
+        };
+        container.appendChild(btn);
+    }
+    const wrapper = document.createElement("div");
+    wrapper.className = "message assistant";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.appendChild(document.createTextNode("Elige tu plan: "));
+    bubble.appendChild(container);
+    wrapper.appendChild(bubble);
+    msgDiv.appendChild(wrapper);
+    msgDiv.scrollTop = msgDiv.scrollHeight;
 }
-function processInput(txt){
-    let t=txt.trim().toLowerCase();
-    if(t==="nuevo"||t==="reiniciar"){ resetChat(); return; }
-    if(state.step==="symptom"){
-        state.symptom=txt;
-        add("user",txt);
+function askSex() { addMessage("assistant", "📌 ¿Sexo biológico? (masculino / femenino)"); state.step = "asking_sex"; }
+function askAge() { addMessage("assistant", "📌 ¿Edad? (número)"); state.step = "asking_age"; }
+function resetChat() {
+    state = { step: "symptom", symptom: "", sex: null, age: null, specialty: null, plan: null };
+    while (msgDiv.children.length > 1) msgDiv.removeChild(msgDiv.lastChild);
+    addMessage("assistant", "🔄 Conversación reiniciada. Cuéntame tu síntoma principal.");
+}
+function processInput(raw) {
+    let text = raw.trim();
+    if (!text) return;
+    const lower = text.toLowerCase();
+    if (lower === "nuevo" || lower === "reiniciar") { resetChat(); return; }
+    if (state.step === "symptom") {
+        state.symptom = text;
+        addMessage("user", text);
         askSex();
-    } else if(state.step==="asking_sex"){
-        if(t==="masculino"||t==="femenino"){ state.sex=t; add("user",t); askAge(); }
-        else add("assistant","Escribe 'masculino' o 'femenino'.");
-    } else if(state.step==="asking_age"){
-        let a=parseInt(t);
-        if(!isNaN(a) && a>0 && a<120){ state.age=a; add("user",t);
-            add("assistant","🤖 Consultando a la IA (Groq) para determinar la especialidad...");
+    } else if (state.step === "asking_sex") {
+        if (lower === "masculino" || lower === "femenino") {
+            state.sex = lower;
+            addMessage("user", text);
+            askAge();
+        } else {
+            addStatusMessage("warning", "Escribe 'masculino' o 'femenino'.");
+        }
+    } else if (state.step === "asking_age") {
+        let ageNum = parseInt(text);
+        if (!isNaN(ageNum) && ageNum > 0 && ageNum < 120) {
+            state.age = ageNum;
+            addMessage("user", text);
+            addMessage("assistant", "🤖 Consultando a la IA (Groq) para determinar la especialidad...");
             callGroqForSpecialty(state.symptom, state.sex, state.age).then(iaSpecialty => {
-                let finalSpecialty;
-                if(iaSpecialty && iaSpecialty !== "Medicina General" && iaSpecialty.length>0){
-                    finalSpecialty = iaSpecialty;
-                    add("assistant",`🧠 IA (Groq) sugiere: <strong>${finalSpecialty}</strong>`, true);
+                let final;
+                if (iaSpecialty && iaSpecialty !== "Medicina General" && iaSpecialty.length > 0) {
+                    final = iaSpecialty;
+                    addStatusMessage("success", `🧠 IA (Groq) sugiere: <strong>${final}</strong>`);
                 } else {
-                    finalSpecialty = suggestSpecialtyLocal(state.symptom, state.sex, state.age);
-                    add("assistant",`⚠️ Usando modo local. Especialidad sugerida: <strong>${finalSpecialty}</strong>`, true);
+                    final = suggestSpecialtyLocal(state.symptom, state.sex, state.age);
+                    addStatusMessage("warning", `⚠️ Usando modo local. Especialidad: <strong>${final}</strong>`);
                 }
-                state.specialty = finalSpecialty;
+                state.specialty = final;
                 renderPlanButtons();
                 state.step = "waitingPlan";
             }).catch(() => {
                 let fallback = suggestSpecialtyLocal(state.symptom, state.sex, state.age);
-                add("assistant",`⚠️ Error con IA. Usando modo local. Especialidad: <strong>${fallback}</strong>`, true);
+                addStatusMessage("error", `❌ Error con IA. Usando modo local. Especialidad: <strong>${fallback}</strong>`);
                 state.specialty = fallback;
                 renderPlanButtons();
                 state.step = "waitingPlan";
             });
-        } else add("assistant","Edad inválida (1-120).");
-    } else if(state.step==="waitingPlan"){
-        let found=null; for(let p of Object.keys(planes)) if(t.includes(p.toLowerCase())){ found=p; break; }
-        if(found){ state.plan=found; add("user",txt); showResults(); }
-        else add("assistant","❌ No reconocí ese plan. Usa los botones o presiona 'Nueva consulta'.");
-    } else if(state.step==="result") add("assistant","Presiona el botón 'Nueva consulta' para iniciar otra.");
+        } else {
+            addStatusMessage("error", "Edad inválida (1-120).");
+        }
+    } else if (state.step === "waitingPlan") {
+        let found = null;
+        for (let p of Object.keys(planes)) {
+            if (lower.includes(p.toLowerCase())) { found = p; break; }
+        }
+        if (found) {
+            state.plan = found;
+            addMessage("user", text);
+            showResults();
+        } else {
+            addStatusMessage("warning", "❓ No reconocí ese plan. Usa los botones o 'Nueva consulta'.");
+        }
+    } else if (state.step === "result") {
+        addStatusMessage("info", "Presiona 'Nueva consulta' para iniciar otra.");
+    }
 }
-
-sendBtn.onclick=()=>{ let v=inp.value.trim(); if(v) processInput(v); inp.value=""; };
-resetBtn.onclick=()=>{ resetChat(); inp.value=""; };
-inp.addEventListener("keypress",e=>{if(e.key==="Enter")sendBtn.click();});
+sendBtn.onclick = () => { let v = inp.value.trim(); if (v) processInput(v); inp.value = ""; };
+resetBtn.onclick = () => { resetChat(); inp.value = ""; };
+inp.addEventListener("keypress", e => { if (e.key === "Enter") sendBtn.click(); });
 inp.focus();
 </script>
 </body>
