@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Vitalia – Asistente de Salud con IA</title>
+    <title>Vitalia – Asistente médico conversacional</title>
     <style>
-        /* ========== VARIABLES (claro/oscuro) ========== */
         :root {
             --primary-blue: #2A6F9E; --primary-dark: #1E5A7F; --secondary-green: #2E9F7A;
             --secondary-light: #E0F2E9; --bg-body: #F7F9FB; --bg-chat: #FFFFFF;
@@ -64,13 +63,8 @@
             flex-wrap: wrap;
             gap: 12px;
         }
-        .chat-header h1 {
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .theme-toggle, .share-btn-header, .emergency-header {
+        .chat-header h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+        .theme-toggle, .share-btn-header {
             background: rgba(255,255,255,0.2);
             border: none;
             border-radius: 40px;
@@ -81,11 +75,7 @@
             transition: 0.2s;
             font-size: 0.85rem;
         }
-        .theme-toggle:hover, .share-btn-header:hover, .emergency-header:hover {
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.02);
-        }
-        .emergency-header { background: #ff4d4d; color: white; }
+        .theme-toggle:hover, .share-btn-header:hover { background: rgba(255,255,255,0.3); transform: scale(1.02); }
         .messages {
             flex: 1;
             overflow-y: auto;
@@ -117,9 +107,6 @@
             border: 1px solid var(--assistant-bubble-border);
             border-bottom-left-radius: 8px;
         }
-        .message.success .bubble { background: var(--secondary-light); color: var(--secondary-green); border-left: 4px solid var(--secondary-green); }
-        .message.warning .bubble { background: var(--warning-light); color: #C49A1A; border-left: 4px solid var(--warning); }
-        .message.error .bubble { background: var(--error-light); color: var(--error); border-left: 4px solid var(--error); }
         .input-area {
             padding: 16px 20px 22px;
             background: var(--bg-chat);
@@ -183,36 +170,26 @@
             border-top: 1px solid var(--border-light);
             color: var(--footer-text);
         }
-        .city-buttons { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-        .city-btn {
-            background: var(--plan-btn-bg);
-            border: none;
-            padding: 6px 16px;
-            border-radius: 40px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            color: var(--plan-btn-text);
+        .typing-indicator .bubble {
+            background: var(--assistant-bubble-bg);
+            border: 1px solid var(--assistant-bubble-border);
+            font-style: italic;
+            color: var(--text-secondary);
         }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 560px) {
-            .message { max-width: 95%; }
-            .chat { height: 95vh; }
-            .plan-btn, .city-btn { padding: 6px 14px; font-size: 0.75rem; }
-            .chat-header h1 { font-size: 1.2rem; }
+        .typing-dots::after {
+            content: '...';
+            animation: typing 1.5s infinite;
+            display: inline-block;
+            width: 24px;
+            text-align: left;
         }
-        .status-icon { display: inline-block; margin-right: 6px; font-weight: bold; }
-        .emergency-btn {
-            background: #ff4d4d;
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 60px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 12px;
-            width: 100%;
+        @keyframes typing {
+            0% { content: '.'; }
+            33% { content: '..'; }
+            66% { content: '...'; }
+            100% { content: '.'; }
         }
-        .share-btn {
+        .emergency-btn, .share-btn {
             background: var(--accent-soft);
             color: var(--text-primary);
             border: none;
@@ -220,13 +197,22 @@
             border-radius: 40px;
             cursor: pointer;
             margin-top: 8px;
+            font-weight: bold;
+        }
+        .emergency-btn { background: #ff4d4d; color: white; width: 100%; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 560px) {
+            .message { max-width: 95%; }
+            .chat { height: 95vh; }
+            .plan-btn { padding: 6px 14px; font-size: 0.75rem; }
+            .chat-header h1 { font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
 <div class="chat">
     <div class="chat-header">
-        <h1>🏥 Vitalia – Asistente de Salud</h1>
+        <h1>🏥 Vitalia – Asistente conversacional</h1>
         <div style="display: flex; gap: 8px;">
             <button id="darkModeToggle" class="theme-toggle">🌙 Modo oscuro</button>
             <button id="shareGlobalBtn" class="share-btn-header">📤 Compartir</button>
@@ -234,15 +220,15 @@
     </div>
     <div class="messages" id="chatMessages">
         <div class="message assistant">
-            <div class="bubble">👋 Hola, soy Vitalia. Cuéntame tu síntoma principal.<br>💡 Ej: dolor de pecho, mareos, dolor de rodilla, ronchas por camarones.</div>
+            <div class="bubble">👋 Hola, soy Vitalia. Cuéntame cómo te sientes y te ayudaré de forma conversacional. 😊</div>
         </div>
     </div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Escribe tu síntoma...">
+        <input type="text" id="userInput" placeholder="Escribe tu mensaje...">
         <button id="sendBtn">Enviar</button>
         <button id="resetBtn" class="reset-btn">↻ Nueva consulta</button>
     </div>
-    <footer>💰 Copago según plan · Básico (40%) · Estándar (25%) · Premium (10%) · IA con Vitalia<br>⚠️ Este asistente es únicamente informativo y no reemplaza evaluación médica profesional.</footer>
+    <footer>💰 Conversación con IA · Planes: Básico (40%), Estándar (25%), Premium (10%) · ⚠️ Siempre consulta a un médico</footer>
 </div>
 
 <script>
@@ -259,138 +245,53 @@ darkModeToggle.addEventListener('click', () => {
     darkModeToggle.textContent = isDark ? '☀️ Modo claro' : '🌙 Modo oscuro';
 });
 
-// ========== HISTORIAL ==========
-let history = [];
+// ========== ELEMENTOS DOM ==========
+const msgDiv = document.getElementById('chatMessages');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const resetBtn = document.getElementById('resetBtn');
 
-// ========== NUEVAS ESPECIALIDADES ==========
-const extraSpecialities = [
-    { esp:"Reumatología", kw:["artritis","artrosis","reuma","lupus","fibromialgia","dolor articular","inflamación articulaciones","esclerosis","tendinitis crónica"], peso:3 },
-    { esp:"Oftalmología", kw:["visión borrosa","ojos rojos","dolor ojo","pérdida visión","moscas volantes","conjuntivitis","desprendimiento retina","ojos secos"], peso:3 },
-    { esp:"Oncología", kw:["cáncer","tumor","masa","bulto","quimioterapia","radiación","carcinoma","melanoma","leucemia"], peso:4 }
-];
-
-// ========== DOCUMENTOS POR ESPECIALIDAD ==========
-const documentosPorEspecialidad = {
-    "Medicina General": ["Cédula de identidad", "Carnet del seguro", "Lista de medicamentos actuales"],
-    "Cardiología": ["Cédula", "Carnet", "Electrocardiograma previo (si tiene)", "Lista de medicamentos"],
-    "Neurología": ["Cédula", "Carnet", "Imágenes (RM, TC) si tiene", "Informe de estudios previos"],
-    "Traumatología": ["Cédula", "Carnet", "Radiografías o resonancias", "Informe de accidente si aplica"],
-    "Alergología": ["Cédula", "Carnet", "Descripción de reacciones alérgicas previas", "Antihistamínicos que toma"],
-    "Urología": ["Cédula", "Carnet", "Análisis de orina reciente", "Estudios de próstata (hombres >40)"],
-    "Ginecología": ["Cédula", "Carnet", "Fecha última menstruación", "Papanicolaou previo"],
-    "Psiquiatría": ["Cédula", "Carnet", "Informe de psicólogo (si tiene)", "Medicación actual"],
-    "Psicología": ["Cédula", "Carnet", "Registro de emociones o diario"],
-    "Otorrinolaringología": ["Cédula", "Carnet", "Estudios de audición previos"],
-    "Dermatología": ["Cédula", "Carnet", "Fotos de lesiones", "Tratamientos tópicos usados"],
-    "Gastroenterología": ["Cédula", "Carnet", "Endoscopias previas", "Dieta habitual"],
-    "Neumología": ["Cédula", "Carnet", "Espirometría previa", "Radiografía de tórax"],
-    "Endocrinología": ["Cédula", "Carnet", "Análisis de sangre recientes (glucosa, hormonas)"],
-    "Infectología": ["Cédula", "Carnet", "Resultados de cultivos", "Vacunación"],
-    "Reumatología": ["Cédula", "Carnet", "Análisis de factores reumatoideos", "Radiografías de manos/pies"],
-    "Oftalmología": ["Cédula", "Carnet", "Gafas o lentes de contacto", "Estudios de presión ocular"],
-    "Oncología": ["Cédula", "Carnet", "Biopsias previas", "Informes de oncólogo anterior", "Tratamientos recibidos"],
-    "Odontología": ["Cédula", "Carnet", "Radiografías dentales"]
+// ========== ESTADO DE LA CONVERSACIÓN ==========
+let conversationHistory = []; // array de {role, content}
+let patientData = {
+    symptom: null,
+    sex: null,
+    age: null,
+    duration: null,
+    city: null
 };
-function getDocuments(esp) { return documentosPorEspecialidad[esp] || ["Cédula de identidad", "Carnet del seguro"]; }
+let lastResults = null; // para compartir
 
-// ========== EXPLICACIÓN LOCAL MEJORADA ==========
-function generateExplanation(symptom, specialty, sex, age) {
-    let lower = symptom.toLowerCase();
-    let reason = "";
-    if (specialty === "Cardiología" && (lower.includes("pecho") || lower.includes("palpitaciones"))) reason = "síntomas compatibles con posible afectación cardíaca.";
-    else if (specialty === "Neurología" && (lower.includes("mareos") || lower.includes("debilidad"))) reason = "síntomas que sugieren un origen neurológico (mareos, debilidad, hormigueo).";
-    else if (specialty === "Traumatología" && (lower.includes("dolor") && (lower.includes("rodilla") || lower.includes("espalda") || lower.includes("hueso")))) reason = "dolor en huesos o articulaciones que puede requerir evaluación ortopédica.";
-    else if (specialty === "Alergología" && (lower.includes("ronchas") || lower.includes("camarones"))) reason = "reacción alérgica evidente por alimentos o ambientales.";
-    else if (specialty === "Urología" && (lower.includes("testículos") || lower.includes("orinar"))) reason = "síntomas del tracto urinario o genital masculino.";
-    else if (specialty === "Ginecología" && (lower.includes("vaginal") || lower.includes("mamas") || (sex==="femenino" && lower.includes("dolor abdominal")))) reason = "síntomas ginecológicos frecuentes en mujeres.";
-    else if (specialty === "Psiquiatría" && (lower.includes("ansiedad") || lower.includes("sueño") || lower.includes("tristeza"))) reason = "posible trastorno del estado de ánimo o ansiedad que requiere evaluación psiquiátrica.";
-    else if (specialty === "Reumatología" && (lower.includes("artritis") || lower.includes("articulaciones"))) reason = "síntomas reumáticos que pueden beneficiarse de estudio especializado.";
-    else if (specialty === "Oftalmología" && (lower.includes("visión") || lower.includes("ojos"))) reason = "alteraciones visuales que requieren evaluación oftalmológica.";
-    else if (specialty === "Oncología" && (lower.includes("cáncer") || lower.includes("tumor") || lower.includes("masa"))) reason = "presencia de masa o antecedente oncológico que necesita seguimiento especializado.";
-    else reason = "la combinación de tus síntomas y datos personales coincide con los patrones típicos de esta especialidad.";
-    return `Vitalia detectó que ${reason} Por eso te recomiendo consultar con ${specialty}.`;
+// ========== FUNCIONES UI ==========
+function addMessage(role, text, isHtml = false) {
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    if (isHtml) bubble.innerHTML = text;
+    else bubble.innerText = text;
+    div.appendChild(bubble);
+    msgDiv.appendChild(div);
+    msgDiv.scrollTop = msgDiv.scrollHeight;
+    // Guardar en historial (solo para la conversación)
+    conversationHistory.push({ role, content: text });
 }
 
-// ========== EMERGENCIA CON GEOLOCALIZACIÓN ==========
-function emergencyAction() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((position) => {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            const mapsUrl = `https://www.google.com/maps/search/hospital+cercano/@${lat},${lng},15z`;
-            window.open(mapsUrl, '_blank');
-        }, () => {
-            alert("No se pudo obtener tu ubicación. Por favor, llama al 911 (o número local de emergencias) o acude al hospital más cercano.");
-        });
-    } else {
-        alert("Tu navegador no soporta geolocalización. Llama al 911.");
-    }
+let typingDiv = null;
+function showTyping() {
+    if (typingDiv) removeTyping();
+    const div = document.createElement('div');
+    div.className = 'message assistant typing-indicator';
+    div.innerHTML = `<div class="bubble">💬 Vitalia está escribiendo<span class="typing-dots"></span></div>`;
+    msgDiv.appendChild(div);
+    msgDiv.scrollTop = msgDiv.scrollHeight;
+    typingDiv = div;
+}
+function removeTyping() {
+    if (typingDiv) { typingDiv.remove(); typingDiv = null; }
 }
 
-// ========== COMPARTIR RESULTADO ==========
-function shareResult(symptom, specialty, hospital, copago, plan, urgencyLevel) {
-    const text = `🏥 *Vitalia - Resumen de tu consulta*\n\n📌 Síntoma: ${symptom}\n🩺 Especialidad sugerida: ${specialty}\n🏨 Hospital más económico: ${hospital}\n💰 Copago estimado: $${copago} USD (${plan})\n🚦 Nivel de urgencia: ${urgencyLevel}\n\n⚠️ Este es un consejo informativo, no reemplaza una evaluación médica presencial.`;
-    navigator.clipboard.writeText(text).then(() => {
-        alert("✅ Resumen copiado al portapapeles. Puedes pegarlo donde quieras.");
-    }).catch(() => alert("No se pudo copiar."));
-}
-
-// ========== MAPA CIUDAD -> HOSPITAL ==========
-const cityToHospital = {
-    "norte": "Hospital Norte", "north": "Hospital Norte",
-    "centro": "Hospital Centro", "center": "Hospital Centro", "central": "Hospital Centro",
-    "sur": "Hospital Sur", "south": "Hospital Sur"
-};
-function getRecommendedHospitalByCity(city, rankingList) {
-    const cityKey = city.toLowerCase();
-    const preferred = cityToHospital[cityKey];
-    if (preferred && rankingList.find(h => h.hospital === preferred)) return preferred;
-    return rankingList[0]?.hospital || "Hospital Centro";
-}
-
-// ========== BASE LOCAL (FALLBACK) + NUEVAS ESPECIALIDADES ==========
-const baseSpecialities = [
-    { esp:"Neurología", kw:["mareos","vértigo","debilidad pierna","pierna izquierda","pesadez cabeza","convulsiones","desmayo"], peso:4 },
-    { esp:"Alergología", kw:["alergia","ronchas","camarones","mariscos","urticaria"], peso:4 },
-    { esp:"Traumatología", kw:["fractura","esguince","rodilla","hombro","dolor espalda","caída"], peso:3 },
-    { esp:"Urología", kw:["testículos","orinar","próstata"], peso:3 },
-    { esp:"Ginecología", kw:["períodos irregulares","infección vaginal","mamas"], peso:3 },
-    { esp:"Cardiología", kw:["taquicardia","palpitaciones","dolor pecho","presión alta"], peso:3 },
-    { esp:"Psiquiatría", kw:["insomnio","tristeza persistente","ansiedad","pensamientos suicidas"], peso:3 },
-    { esp:"Psicología", kw:["apatía","baja autoestima","culpa"], peso:2 },
-    { esp:"Otorrinolaringología", kw:["dolor oído","congestión nasal","resfriado"], peso:2 },
-    { esp:"Dermatología", kw:["piel","erupción","acné"], peso:2 },
-    { esp:"Gastroenterología", kw:["dolor abdominal","reflujo","diarrea"], peso:2 },
-    { esp:"Neumología", kw:["tos","falta aire","sibilancias"], peso:2 },
-    { esp:"Medicina General", kw:["fiebre","cansancio","fatiga"], peso:1 }
-];
-const allSpecialities = [...baseSpecialities, ...extraSpecialities];
-function suggestSpecialtyLocal(symptom, sex, age) {
-    let lower = symptom.toLowerCase();
-    let best = { esp:"Medicina General", score:0 };
-    for (let s of allSpecialities) {
-        let score = 0;
-        for (let kw of s.kw) if (lower.includes(kw)) score += s.peso;
-        if (score > best.score) best = { esp:s.esp, score };
-    }
-    let esp = best.esp;
-    // Refinamientos
-    if (esp === "Gastroenterología" && lower.includes("dolor abdominal")) {
-        if (sex === "femenino") esp = "Ginecología";
-        else if (sex === "masculino" && age > 50) esp = "Urología";
-    }
-    if (esp === "Medicina General" && (lower.includes("fatiga") || lower.includes("cansancio")) && age > 60) esp = "Cardiología";
-    if (lower.includes("testículos") || lower.includes("dificultad para orinar")) esp = "Urología";
-    if (lower.includes("taquicardia") || lower.includes("palpitaciones")) esp = "Cardiología";
-    if ((lower.includes("ronchas") || lower.includes("urticaria")) && (lower.includes("camarones") || lower.includes("mariscos"))) esp = "Alergología";
-    if ((lower.includes("mareos") || lower.includes("vértigo")) && (lower.includes("debilidad") || lower.includes("pierna"))) esp = "Neurología";
-    if (lower.includes("artritis") || lower.includes("articulaciones")) esp = "Reumatología";
-    if (lower.includes("visión") || lower.includes("ojos")) esp = "Oftalmología";
-    if (lower.includes("cáncer") || lower.includes("tumor")) esp = "Oncología";
-    return esp;
-}
-
-// ========== PLANES Y HOSPITALES (con nuevas especialidades) ==========
+// ========== PLANES Y HOSPITALES (igual que antes) ==========
 const planes = {
     "Plan Básico": { c: 0.60, l: "Básico (pagas 40%)" },
     "Plan Estándar": { c: 0.75, l: "Estándar (pagas 25%)" },
@@ -402,22 +303,6 @@ const hosp = {
     "Hospital Sur": { "Medicina General":42, "Neurología":58, "Odontología":38, "Otorrinolaringología":52, "Neumología":52, "Cardiología":58, "Gastroenterología":55, "Dermatología":52, "Psiquiatría":52, "Psicología":47, "Urología":52, "Ginecología":52, "Endocrinología":55, "Infectología":54, "Alergología":55, "Traumatología":58, "Reumatología":58, "Oftalmología":55, "Oncología":60 }
 };
 
-// ========== FUNCIONES AUXILIARES ==========
-function urgencyLevel(symptom) {
-    let s = symptom.toLowerCase();
-    if (s.includes("dolor pecho") || s.includes("dificultad respiratoria") || s.includes("desmayo") || s.includes("convulsiones"))
-        return { level: "🔴 URGENTE", color: "#ff4d4d", msg: "Se recomienda acudir inmediatamente a emergencias." };
-    if (s.includes("mareos") || s.includes("fiebre") || s.includes("dolor cabeza"))
-        return { level: "🟡 PRIORIDAD MEDIA", color: "#ffcc00", msg: "Se recomienda consulta médica en las próximas horas." };
-    return { level: "🟢 PRIORIDAD BAJA", color: "#28a745", msg: "Puede agendar consulta regular." };
-}
-function dynamicQuestion(symptom) {
-    let s = symptom.toLowerCase();
-    if (s.includes("dolor pecho")) return "¿Tiene dificultad para respirar?";
-    if (s.includes("mareos")) return "¿Ha tenido desmayos?";
-    if (s.includes("dolor abdominal")) return "¿Tiene náuseas o vómitos?";
-    return null;
-}
 function copago(cb, c) { return Math.round(cb * (1 - c)); }
 function ranking(esp, plan) {
     let p = planes[plan];
@@ -432,162 +317,169 @@ function ranking(esp, plan) {
     return { mejor: resultados[0], todos: resultados };
 }
 
-// ========== WORKER (IA Groq) ==========
-const WORKER_URL = 'https://med-ai-proxy.dianaml76.workers.dev/api/suggest';
-async function callVitaliaForSpecialty(symptom, sex, age) {
+// ========== FUNCIÓN PARA MOSTRAR RESULTADOS FINALES (cuando la IA decide) ==========
+function showFinalResults(specialty, urgency, documentsList) {
+    // Guardar en patientData
+    const rank = ranking(specialty, "Plan Básico"); // usamos básico para elegir hospital por ciudad
+    let bestHospital = "Hospital Centro";
+    if (rank && patientData.city) {
+        const cityMap = { norte: "Hospital Norte", centro: "Hospital Centro", sur: "Hospital Sur" };
+        bestHospital = cityMap[patientData.city.toLowerCase()] || rank.mejor.hospital;
+    } else if (rank) {
+        bestHospital = rank.mejor.hospital;
+    }
+    // Guardamos para compartir
+    lastResults = { specialty, hospital: bestHospital, urgency, plan: null, copago: null };
+
+    // Preguntar plan
+    const container = document.createElement("div");
+    container.className = "plan-buttons";
+    for (let [nombre, info] of Object.entries(planes)) {
+        const btn = document.createElement("button");
+        btn.innerText = info.l;
+        btn.className = "plan-btn";
+        btn.onclick = async () => {
+            const rank2 = ranking(specialty, nombre);
+            if (!rank2) { addMessage("assistant", "No hay datos para esa especialidad."); return; }
+            const mejor = rank2.mejor;
+            const urgencyObj = { level: urgency, color: "#28a745", msg: "" };
+            if (urgency.includes("URGENTE")) urgencyObj.color = "#ff4d4d";
+            else if (urgency.includes("MEDIA")) urgencyObj.color = "#ffcc00";
+            let html = `<strong>✅ ${nombre}</strong> (cubre ${planes[nombre].c*100}%)<br><br>`;
+            html += `🏥 <strong>Más económico y cercano:</strong> ${mejor.hospital}<br>`;
+            html += `💰 <strong>Tu copago:</strong> $${mejor.copago}<br>`;
+            html += `📋 Costo base: $${mejor.costoBase}<br><br>`;
+            html += `<strong>Comparativa red:</strong><br>`;
+            rank2.todos.forEach(h => { html += `• ${h.hospital}: copago $${h.copago} (base $${h.costoBase})<br>`; });
+            html += `<br><div style="padding:12px; border-radius:12px; background:${urgencyObj.color}; color:white; font-weight:bold;">🚦 ${urgency}<br><span style="font-weight:normal">${urgencyObj.msg}</span></div>`;
+            if (urgency.includes("URGENTE")) {
+                html += `<br><button id="emergencyBtnFinal" class="emergency-btn">🚨 Llamar a emergencias / Buscar hospital cercano</button>`;
+            }
+            html += `<br><button id="shareResultBtnFinal" class="share-btn">📤 Compartir este resultado</button>`;
+            addMessage("assistant", html, true);
+            // Actualizar lastResults con plan y copago
+            lastResults = { specialty, hospital: mejor.hospital, urgency, plan: nombre, copago: mejor.copago };
+            setTimeout(() => {
+                const emerg = document.getElementById("emergencyBtnFinal");
+                if (emerg) emerg.onclick = () => emergencyAction();
+                const share = document.getElementById("shareResultBtnFinal");
+                if (share) share.onclick = () => shareResult();
+            }, 100);
+        };
+        container.appendChild(btn);
+    }
+    const wrapper = document.createElement("div");
+    wrapper.className = "message assistant";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.appendChild(document.createTextNode("Elige tu plan de seguro para ver el copago exacto:"));
+    bubble.appendChild(container);
+    wrapper.appendChild(bubble);
+    msgDiv.appendChild(wrapper);
+    msgDiv.scrollTop = msgDiv.scrollHeight;
+
+    // También mostrar documentos recomendados
+    if (documentsList && documentsList.length) {
+        addMessage("assistant", `📋 <strong>Documentos recomendados para tu consulta con ${specialty}:</strong><br>${documentsList.map(d => `• ${d}`).join('<br>')}`, true);
+    }
+}
+
+function emergencyAction() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            pos => window.open(`https://www.google.com/maps/search/hospital+cercano/@${pos.coords.latitude},${pos.coords.longitude},15z`, '_blank'),
+            () => alert("No se pudo obtener ubicación. Llama al 911.")
+        );
+    } else alert("Tu navegador no soporta geolocalización. Llama al 911.");
+}
+
+function shareResult() {
+    if (!lastResults) return;
+    const text = `🏥 *Vitalia - Resumen*\n\n🩺 Especialidad: ${lastResults.specialty}\n🏨 Hospital: ${lastResults.hospital}\n💰 Copago: $${lastResults.copago} (${lastResults.plan})\n🚦 Urgencia: ${lastResults.urgency}\n\n⚠️ Solo informativo, no reemplaza consulta médica.`;
+    navigator.clipboard.writeText(text).then(() => alert("✅ Resumen copiado al portapapeles."));
+}
+
+// ========== COMUNICACIÓN CON EL WORKER ==========
+const WORKER_URL = 'https://med-ai-proxy.dianaml76.workers.dev/api/chat'; // endpoint /api/chat
+
+async function sendToVitalia(userMessage) {
+    showTyping();
     try {
         const response = await fetch(WORKER_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ symptom, sex, age })
+            body: JSON.stringify({
+                messages: conversationHistory,
+                symptom: patientData.symptom,
+                sex: patientData.sex,
+                age: patientData.age,
+                duration: patientData.duration,
+                city: patientData.city
+            })
         });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        if (data.specialty && typeof data.specialty === 'string') return data.specialty;
-        throw new Error('Respuesta inválida');
-    } catch (error) { return null; }
-}
-
-// ========== ESTADO Y UI ==========
-let state = { step: "symptom", symptom: "", sex: null, age: null, duration: null, city: null, specialty: null, plan: null, dynamicAnswer: null, lastResults: null };
-const msgDiv = document.getElementById("chatMessages"), inp = document.getElementById("userInput"), sendBtn = document.getElementById("sendBtn"), resetBtn = document.getElementById("resetBtn");
-
-function addMessage(role, text, isHtml = false, customClass = "") {
-    const div = document.createElement("div");
-    div.className = `message ${role}`;
-    if (customClass) div.classList.add(customClass);
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
-    if (isHtml) bubble.innerHTML = text;
-    else bubble.innerText = text;
-    div.appendChild(bubble);
-    msgDiv.appendChild(div);
-    msgDiv.scrollTop = msgDiv.scrollHeight;
-}
-function addStatusMessage(type, text) {
-    const icon = type === 'success' ? '✓' : (type === 'warning' ? '⚠️' : '❌');
-    const className = type === 'success' ? 'success' : (type === 'warning' ? 'warning' : 'error');
-    addMessage("assistant", `<span class="status-icon">${icon}</span> ${text}`, true, className);
-}
-
-function askSex() { addMessage("assistant", "📌 ¿Sexo biológico? (masculino / femenino)"); state.step = "asking_sex"; }
-function askAge() { addMessage("assistant", "📌 ¿Edad? (número)"); state.step = "asking_age"; }
-function askDuration() { addMessage("assistant", "⏳ ¿Cuántos días lleva con el síntoma?"); state.step = "asking_duration"; }
-function askCity() { 
-    addMessage("assistant", "📍 ¿En qué ciudad te encuentras? (opcional, para recomendarte el hospital más cercano)", false);
-    const citiesDiv = document.createElement("div"); citiesDiv.className = "city-buttons";
-    ["Norte", "Centro", "Sur"].forEach(c => {
-        let btn = document.createElement("button");
-        btn.innerText = c;
-        btn.className = "city-btn";
-        btn.onclick = () => { processInput(c); };
-        citiesDiv.appendChild(btn);
-    });
-    const wrapper = document.createElement("div"); wrapper.className = "message assistant";
-    const bubble = document.createElement("div"); bubble.className = "bubble";
-    bubble.appendChild(citiesDiv);
-    wrapper.appendChild(bubble);
-    msgDiv.appendChild(wrapper);
-    msgDiv.scrollTop = msgDiv.scrollHeight;
-    state.step = "asking_city";
-}
-function resetChat() {
-    state = { step: "symptom", symptom: "", sex: null, age: null, duration: null, city: null, specialty: null, plan: null, dynamicAnswer: null, lastResults: null };
-    while (msgDiv.children.length > 1) msgDiv.removeChild(msgDiv.lastChild);
-    addMessage("assistant", "🔄 Conversación reiniciada. Cuéntame tu síntoma principal.");
-}
-async function processInput(raw) {
-    let text = raw.trim();
-    if (!text) return;
-    const lower = text.toLowerCase();
-    if (lower === "nuevo" || lower === "reiniciar") { resetChat(); return; }
-    if (state.step === "symptom") {
-        state.symptom = text;
-        addMessage("user", text);
-        let q = dynamicQuestion(text);
-        if (q) { addMessage("assistant", `🩺 ${q}`); state.step = "asking_dynamic"; }
-        else askSex();
-    } else if (state.step === "asking_dynamic") {
-        state.dynamicAnswer = text; addMessage("user", text); askSex();
-    } else if (state.step === "asking_sex") {
-        if (lower === "masculino" || lower === "femenino") { state.sex = lower; addMessage("user", text); askAge(); }
-        else addStatusMessage("warning", "Escribe 'masculino' o 'femenino'.");
-    } else if (state.step === "asking_age") {
-        let ageNum = parseInt(text);
-        if (!isNaN(ageNum) && ageNum > 0 && ageNum < 120) { state.age = ageNum; addMessage("user", text); askDuration(); }
-        else addStatusMessage("error", "Edad inválida (1-120).");
-    } else if (state.step === "asking_duration") {
-        let dur = parseInt(text);
-        if (!isNaN(dur) && dur >= 0 && dur < 365) { state.duration = dur; addMessage("user", text); askCity(); }
-        else addStatusMessage("error", "Ingrese un número válido de días (0-364).");
-    } else if (state.step === "asking_city") {
-        state.city = text; addMessage("user", text);
-        addMessage("assistant", "🤖 Consultando a Vitalia...");
-        let iaSpecialty = await callVitaliaForSpecialty(state.symptom, state.sex, state.age);
-        let finalSpecialty;
-        if (iaSpecialty && iaSpecialty !== "Medicina General") { finalSpecialty = iaSpecialty; addStatusMessage("success", `🧠 Vitalia sugiere: <strong>${finalSpecialty}</strong>`); }
-        else { finalSpecialty = suggestSpecialtyLocal(state.symptom, state.sex, state.age); addStatusMessage("warning", `⚠️ Usando modo local. Especialidad: <strong>${finalSpecialty}</strong>`); }
-        state.specialty = finalSpecialty;
-        const rank = ranking(state.specialty, "Plan Básico"); // temporal para elegir hospital por ciudad
-        if (rank) {
-            const bestHospital = getRecommendedHospitalByCity(state.city, rank.todos);
-            state.recommendedHospital = bestHospital;
-            addMessage("assistant", `📍 Según tu ciudad, el hospital más conveniente es <strong>${bestHospital}</strong> (por cercanía y costo).`, true);
+        removeTyping();
+        if (data.error) {
+            addMessage("assistant", "Lo siento, tuve un error técnico. Por favor, intenta de nuevo.");
+            return;
         }
-        // Mostrar explicación y documentos
-        const explanation = generateExplanation(state.symptom, state.specialty, state.sex, state.age);
-        addMessage("assistant", `🧠 ${explanation}`, true);
-        const docs = getDocuments(state.specialty);
-        addMessage("assistant", `📋 <strong>Documentos recomendados para llevar a la consulta:</strong><br>${docs.map(d => `• ${d}`).join('<br>')}`, true);
-        renderPlanButtons();
-        state.step = "waitingPlan";
-    } else if (state.step === "waitingPlan") {
-        let found = null;
-        for (let p of Object.keys(planes)) if (lower.includes(p.toLowerCase())) { found = p; break; }
-        if (found) {
-            state.plan = found;
-            addMessage("user", text);
-            const rank = ranking(state.specialty, state.plan);
-            if (rank) {
-                const bestByCity = getRecommendedHospitalByCity(state.city, rank.todos);
-                const mejor = rank.todos.find(h => h.hospital === bestByCity) || rank.mejor;
-                const urgency = urgencyLevel(state.symptom);
-                let html = `<strong>✅ ${state.plan}</strong> (cubre ${planes[state.plan].c*100}%)<br><br>`;
-                html += `🏥 <strong>Más económico y cercano:</strong> ${mejor.hospital}<br>`;
-                html += `💰 <strong>Tu copago:</strong> $${mejor.copago}<br>`;
-                html += `📋 Costo base: $${mejor.costoBase}<br><br>`;
-                html += `<strong>Comparativa red:</strong><br>`;
-                rank.todos.forEach(h => { html += `• ${h.hospital}: copago $${h.copago} (base $${h.costoBase})<br>`; });
-                html += `<br><div style="padding:12px; border-radius:12px; background:${urgency.color}; color:white; font-weight:bold;">🚦 ${urgency.level}<br><span style="font-weight:normal">${urgency.msg}</span></div>`;
-                if (urgency.level.includes("URGENTE")) {
-                    html += `<br><button id="emergencyBtn" class="emergency-btn">🚨 Llamar a emergencias / Buscar hospital cercano</button>`;
-                }
-                html += `<br><button id="shareResultBtn" class="share-btn">📤 Compartir este resultado</button>`;
-                addMessage("assistant", html, true);
-                // Guardar últimos resultados para compartir y botón emergencia
-                state.lastResults = { symptom: state.symptom, specialty: state.specialty, hospital: mejor.hospital, copago: mejor.copago, plan: state.plan, urgency: urgency.level };
-                setTimeout(() => {
-                    const shareBtn = document.getElementById("shareResultBtn");
-                    if (shareBtn) shareBtn.onclick = () => shareResult(state.lastResults.symptom, state.lastResults.specialty, state.lastResults.hospital, state.lastResults.copago, state.lastResults.plan, state.lastResults.urgency);
-                    const emergBtn = document.getElementById("emergencyBtn");
-                    if (emergBtn) emergBtn.onclick = () => emergencyAction();
-                }, 100);
-                history.push({ symptom: state.symptom, specialty: state.specialty, plan: state.plan, city: state.city, duration: state.duration });
-                state.step = "result";
-            } else addStatusMessage("error", "No hay datos para esa especialidad.");
-        } else addStatusMessage("warning", "❓ No reconocí ese plan. Usa los botones o 'Nueva consulta'.");
-    } else if (state.step === "result") addStatusMessage("info", "Presiona 'Nueva consulta' para iniciar otra.");
+        // Mostrar respuesta de la IA
+        addMessage("assistant", data.message);
+        // Actualizar patientData con la información que la IA haya inferido
+        if (data.next_action === "show_results" && data.specialty) {
+            patientData.specialty = data.specialty;
+            showFinalResults(data.specialty, data.urgency, data.documents);
+        } else if (data.next_action === "ask_info") {
+            // La IA preguntará en su message, no hacemos más.
+        }
+    } catch (err) {
+        removeTyping();
+        addMessage("assistant", "⚠️ Error de conexión con Vitalia. Intenta de nuevo más tarde.");
+        console.error(err);
+    }
 }
-sendBtn.onclick = () => { let v = inp.value.trim(); if (v) processInput(v); inp.value = ""; };
-resetBtn.onclick = () => { resetChat(); inp.value = ""; };
-inp.addEventListener("keypress", e => { if (e.key === "Enter") sendBtn.click(); });
-inp.focus();
 
-// Botón compartir global (si hay resultados)
+// ========== PROCESAR ENTRADA DEL USUARIO ==========
+async function processUserInput(text) {
+    if (!text.trim()) return;
+    addMessage("user", text);
+    // Extraer información básica del mensaje para actualizar patientData (simple parsing)
+    const lower = text.toLowerCase();
+    if (!patientData.symptom) patientData.symptom = text;
+    if (lower.includes("masculino") || lower.includes("hombre") || lower.includes("varón")) patientData.sex = "masculino";
+    if (lower.includes("femenino") || lower.includes("mujer")) patientData.sex = "femenino";
+    const ageMatch = text.match(/\b(\d{1,3})\s*(años|años?|año|edades?)\b/i);
+    if (ageMatch) patientData.age = parseInt(ageMatch[1]);
+    const daysMatch = text.match(/\b(\d+)\s*(días|dias|día)\b/i);
+    if (daysMatch) patientData.duration = parseInt(daysMatch[1]);
+    const cityNames = ["norte", "centro", "sur"];
+    for (let c of cityNames) if (lower.includes(c)) patientData.city = c;
+
+    await sendToVitalia(text);
+}
+
+// ========== REINICIAR CONVERSACIÓN ==========
+function resetChat() {
+    conversationHistory = [];
+    patientData = { symptom: null, sex: null, age: null, duration: null, city: null };
+    lastResults = null;
+    while (msgDiv.children.length > 1) msgDiv.removeChild(msgDiv.lastChild);
+    addMessage("assistant", "🔄 Conversación reiniciada. Cuéntame cómo te sientes.");
+}
+
+// ========== EVENTOS ==========
+sendBtn.onclick = () => {
+    const text = userInput.value.trim();
+    if (text) processUserInput(text);
+    userInput.value = "";
+};
+resetBtn.onclick = () => resetChat();
+userInput.addEventListener("keypress", e => { if (e.key === "Enter") sendBtn.click(); });
 document.getElementById("shareGlobalBtn").onclick = () => {
-    if (state.lastResults) shareResult(state.lastResults.symptom, state.lastResults.specialty, state.lastResults.hospital, state.lastResults.copago, state.lastResults.plan, state.lastResults.urgency);
+    if (lastResults) shareResult();
     else alert("Aún no hay resultados para compartir. Completa una consulta primero.");
 };
+userInput.focus();
 </script>
 </body>
 </html>
