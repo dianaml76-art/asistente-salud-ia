@@ -252,7 +252,7 @@ const sendBtn = document.getElementById('sendBtn');
 const resetBtn = document.getElementById('resetBtn');
 
 // ========== ESTADO DE LA CONVERSACIÓN ==========
-let conversationHistory = []; // array de {role, content}
+let conversationHistory = [];
 let patientData = {
     symptom: null,
     sex: null,
@@ -260,7 +260,7 @@ let patientData = {
     duration: null,
     city: null
 };
-let lastResults = null; // para compartir
+let lastResults = null;
 
 // ========== FUNCIONES UI ==========
 function addMessage(role, text, isHtml = false) {
@@ -273,7 +273,6 @@ function addMessage(role, text, isHtml = false) {
     div.appendChild(bubble);
     msgDiv.appendChild(div);
     msgDiv.scrollTop = msgDiv.scrollHeight;
-    // Guardar en historial (solo para la conversación)
     conversationHistory.push({ role, content: text });
 }
 
@@ -291,7 +290,7 @@ function removeTyping() {
     if (typingDiv) { typingDiv.remove(); typingDiv = null; }
 }
 
-// ========== PLANES Y HOSPITALES (igual que antes) ==========
+// ========== PLANES Y HOSPITALES ==========
 const planes = {
     "Plan Básico": { c: 0.60, l: "Básico (pagas 40%)" },
     "Plan Estándar": { c: 0.75, l: "Estándar (pagas 25%)" },
@@ -317,10 +316,8 @@ function ranking(esp, plan) {
     return { mejor: resultados[0], todos: resultados };
 }
 
-// ========== FUNCIÓN PARA MOSTRAR RESULTADOS FINALES (cuando la IA decide) ==========
 function showFinalResults(specialty, urgency, documentsList) {
-    // Guardar en patientData
-    const rank = ranking(specialty, "Plan Básico"); // usamos básico para elegir hospital por ciudad
+    const rank = ranking(specialty, "Plan Básico");
     let bestHospital = "Hospital Centro";
     if (rank && patientData.city) {
         const cityMap = { norte: "Hospital Norte", centro: "Hospital Centro", sur: "Hospital Sur" };
@@ -328,10 +325,8 @@ function showFinalResults(specialty, urgency, documentsList) {
     } else if (rank) {
         bestHospital = rank.mejor.hospital;
     }
-    // Guardamos para compartir
     lastResults = { specialty, hospital: bestHospital, urgency, plan: null, copago: null };
 
-    // Preguntar plan
     const container = document.createElement("div");
     container.className = "plan-buttons";
     for (let [nombre, info] of Object.entries(planes)) {
@@ -357,7 +352,6 @@ function showFinalResults(specialty, urgency, documentsList) {
             }
             html += `<br><button id="shareResultBtnFinal" class="share-btn">📤 Compartir este resultado</button>`;
             addMessage("assistant", html, true);
-            // Actualizar lastResults con plan y copago
             lastResults = { specialty, hospital: mejor.hospital, urgency, plan: nombre, copago: mejor.copago };
             setTimeout(() => {
                 const emerg = document.getElementById("emergencyBtnFinal");
@@ -378,7 +372,6 @@ function showFinalResults(specialty, urgency, documentsList) {
     msgDiv.appendChild(wrapper);
     msgDiv.scrollTop = msgDiv.scrollHeight;
 
-    // También mostrar documentos recomendados
     if (documentsList && documentsList.length) {
         addMessage("assistant", `📋 <strong>Documentos recomendados para tu consulta con ${specialty}:</strong><br>${documentsList.map(d => `• ${d}`).join('<br>')}`, true);
     }
@@ -400,7 +393,7 @@ function shareResult() {
 }
 
 // ========== COMUNICACIÓN CON EL WORKER ==========
-const WORKER_URL = 'https://med-ai-proxy.dianaml76.workers.dev/api/chat'; // endpoint /api/chat
+const WORKER_URL = 'https://med-ai-proxy.dianaml76.workers.dev/api/chat';
 
 async function sendToVitalia(userMessage) {
     showTyping();
@@ -420,17 +413,12 @@ async function sendToVitalia(userMessage) {
         const data = await response.json();
         removeTyping();
         if (data.error) {
-            addMessage("assistant", "Lo siento, tuve un error técnico. Por favor, intenta de nuevo.");
+            addMessage("assistant", "⚠️ Lo siento, Vitalia no puede responder ahora. Por favor, intenta de nuevo más tarde.");
             return;
         }
-        // Mostrar respuesta de la IA
         addMessage("assistant", data.message);
-        // Actualizar patientData con la información que la IA haya inferido
         if (data.next_action === "show_results" && data.specialty) {
-            patientData.specialty = data.specialty;
             showFinalResults(data.specialty, data.urgency, data.documents);
-        } else if (data.next_action === "ask_info") {
-            // La IA preguntará en su message, no hacemos más.
         }
     } catch (err) {
         removeTyping();
@@ -443,7 +431,6 @@ async function sendToVitalia(userMessage) {
 async function processUserInput(text) {
     if (!text.trim()) return;
     addMessage("user", text);
-    // Extraer información básica del mensaje para actualizar patientData (simple parsing)
     const lower = text.toLowerCase();
     if (!patientData.symptom) patientData.symptom = text;
     if (lower.includes("masculino") || lower.includes("hombre") || lower.includes("varón")) patientData.sex = "masculino";
@@ -458,7 +445,7 @@ async function processUserInput(text) {
     await sendToVitalia(text);
 }
 
-// ========== REINICIAR CONVERSACIÓN ==========
+// ========== REINICIAR ==========
 function resetChat() {
     conversationHistory = [];
     patientData = { symptom: null, sex: null, age: null, duration: null, city: null };
