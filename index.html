@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Asistente Salud con IA – Copago y Cobertura</title>
+    <title>Vitalia – Asistente de Salud con IA</title>
     <style>
-        /* ========== VARIABLES DE COLOR (MODO CLARO POR DEFECTO) ========== */
+        /* ========== VARIABLES DE COLOR (MODO CLARO) ========== */
         :root {
             --primary-blue: #2A6F9E;
             --primary-dark: #1E5A7F;
@@ -70,7 +70,7 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
-            transition: background 0.2s, color 0.2s;
+            transition: background 0.2s;
         }
         .chat {
             max-width: 880px;
@@ -156,7 +156,6 @@
             background: var(--secondary-light);
             color: var(--secondary-green);
             border-left: 4px solid var(--secondary-green);
-            border-bottom-left-radius: 8px;
         }
         .message.warning .bubble {
             background: var(--warning-light);
@@ -259,12 +258,12 @@
 <body>
 <div class="chat">
     <div class="chat-header">
-        <h1>🏥 Asistente de Salud con IA</h1>
+        <h1>🏥 Vitalia – Asistente de Salud</h1>
         <button id="darkModeToggle" class="theme-toggle">🌙 Modo oscuro</button>
     </div>
     <div class="messages" id="chatMessages">
         <div class="message assistant">
-            <div class="bubble">👋 Hola. Cuéntame tu síntoma principal. Usaré Vitalia para sugerir la especialidad.<br>💡 Ej: mareos, dolor de cabeza, dolor de rodilla, ronchas por camarones.</div>
+            <div class="bubble">👋 Hola, soy Vitalia. Cuéntame tu síntoma principal.<br>💡 Ej: dolor de pecho, mareos, dolor de rodilla, ronchas por camarones.</div>
         </div>
     </div>
     <div class="input-area">
@@ -272,7 +271,7 @@
         <button id="sendBtn">Enviar</button>
         <button id="resetBtn" class="reset-btn">↻ Nueva consulta</button>
     </div>
-    <footer>💰 Copago según plan · Básico (pagas 40%) · Estándar (25%) · Premium (10%) · IA con Vitalia</footer>
+    <footer>💰 Copago según plan · Básico (40%) · Estándar (25%) · Premium (10%) · IA con Vitalia<br>⚠️ Este asistente es únicamente informativo y no reemplaza evaluación médica profesional.</footer>
 </div>
 
 <script>
@@ -289,7 +288,36 @@ darkModeToggle.addEventListener('click', () => {
     darkModeToggle.textContent = isDark ? '☀️ Modo claro' : '🌙 Modo oscuro';
 });
 
-// ========== BASE LOCAL (FALLBACK) MEJORADA ==========
+// ========== HISTORIAL DE CONSULTAS ==========
+let history = [];
+
+// ========== NIVEL DE URGENCIA ==========
+function urgencyLevel(symptom) {
+    let s = symptom.toLowerCase();
+    if (s.includes("dolor pecho") || s.includes("dificultad respiratoria") || s.includes("desmayo") || s.includes("convulsiones")) {
+        return { level: "🔴 URGENTE", color: "#ff4d4d", msg: "Se recomienda acudir inmediatamente a emergencias." };
+    }
+    if (s.includes("mareos") || s.includes("fiebre") || s.includes("dolor cabeza")) {
+        return { level: "🟡 PRIORIDAD MEDIA", color: "#ffcc00", msg: "Se recomienda consulta médica en las próximas horas." };
+    }
+    return { level: "🟢 PRIORIDAD BAJA", color: "#28a745", msg: "Puede agendar consulta regular." };
+}
+
+// ========== PREGUNTAS DINÁMICAS (según síntoma) ==========
+function dynamicQuestion(symptom) {
+    let s = symptom.toLowerCase();
+    if (s.includes("dolor pecho")) return "¿Tiene dificultad para respirar?";
+    if (s.includes("mareos")) return "¿Ha tenido desmayos?";
+    if (s.includes("dolor abdominal")) return "¿Tiene náuseas o vómitos?";
+    return null;
+}
+
+// ========== EXPLICACIÓN GENÉRICA (para transparencia) ==========
+function explainReason(symptom, esp) {
+    return `La recomendación se basa en patrones encontrados entre los síntomas ingresados y la especialidad médica ${esp}.`;
+}
+
+// ========== BASE LOCAL (FALLBACK) ==========
 const specialities = [
     { esp:"Neurología", kw:["mareos","vértigo","inestabilidad","pérdida de equilibrio","náuseas","vómito","pesadez cabeza","cabeza pesada","dolor cabeza","migraña","debilidad pierna","debilidad brazo","pierna izquierda","pierna derecha","brazo izquierdo","dificultad mover","parálisis","entumecimiento","hormigueo","temblor","convulsiones","desmayo","confusión","habla arrastrada","visión doble"], peso:4 },
     { esp:"Alergología", kw:["alergia","estornudos","goteo nasal","congestión nasal","ojos llorosos","urticaria","ronchas","camarones","mariscos","comí"], peso:4 },
@@ -340,7 +368,7 @@ const hosp = {
 };
 
 // ========== ESTADO Y UI ==========
-let state = { step: "symptom", symptom: "", sex: null, age: null, specialty: null, plan: null };
+let state = { step: "symptom", symptom: "", sex: null, age: null, duration: null, specialty: null, plan: null, dynamicAnswer: null };
 const msgDiv = document.getElementById("chatMessages"), inp = document.getElementById("userInput"), sendBtn = document.getElementById("sendBtn"), resetBtn = document.getElementById("resetBtn");
 
 function addMessage(role, text, isHtml = false, customClass = "") {
@@ -404,14 +432,25 @@ function showResults() {
     }
     const mejor = rank.mejor;
     const porcentaje = planes[state.plan].c * 100;
+    const urgency = urgencyLevel(state.symptom);
     let html = `<strong>✅ ${state.plan}</strong> (cubre ${porcentaje}%)<br><br>`;
     html += `🏥 <strong>Más económico:</strong> ${mejor.hospital}<br>`;
     html += `💰 <strong>Tu copago:</strong> $${mejor.copago}<br>`;
     html += `📋 Costo base: $${mejor.costoBase}<br><br>`;
     html += `<strong>Comparativa red:</strong><br>`;
     rank.todos.forEach(h => { html += `• ${h.hospital}: copago $${h.copago} (base $${h.costoBase})<br>`; });
+    html += `<br><div style="padding:12px; border-radius:12px; background:${urgency.color}; color:white; font-weight:bold;">🚦 ${urgency.level}<br><span style="font-weight:normal">${urgency.msg}</span></div>`;
+    html += `<br>🧠 <strong>Explicación IA:</strong><br>${explainReason(state.symptom, state.specialty)}<br>`;
     html += `<br><em>💡 Presiona "Nueva consulta" para reiniciar.</em>`;
     addMessage("assistant", html, true);
+    // Guardar en historial
+    history.push({
+        symptom: state.symptom,
+        specialty: state.specialty,
+        plan: state.plan,
+        duration: state.duration,
+        urgency: urgency.level
+    });
     state.step = "result";
 }
 function renderPlanButtons() {
@@ -440,8 +479,9 @@ function renderPlanButtons() {
 }
 function askSex() { addMessage("assistant", "📌 ¿Sexo biológico? (masculino / femenino)"); state.step = "asking_sex"; }
 function askAge() { addMessage("assistant", "📌 ¿Edad? (número)"); state.step = "asking_age"; }
+function askDuration() { addMessage("assistant", "⏳ ¿Cuántos días lleva con el síntoma?"); state.step = "asking_duration"; }
 function resetChat() {
-    state = { step: "symptom", symptom: "", sex: null, age: null, specialty: null, plan: null };
+    state = { step: "symptom", symptom: "", sex: null, age: null, duration: null, specialty: null, plan: null, dynamicAnswer: null };
     while (msgDiv.children.length > 1) msgDiv.removeChild(msgDiv.lastChild);
     addMessage("assistant", "🔄 Conversación reiniciada. Cuéntame tu síntoma principal.");
 }
@@ -452,6 +492,18 @@ function processInput(raw) {
     if (lower === "nuevo" || lower === "reiniciar") { resetChat(); return; }
     if (state.step === "symptom") {
         state.symptom = text;
+        addMessage("user", text);
+        // Pregunta dinámica
+        let q = dynamicQuestion(text);
+        if (q) {
+            addMessage("assistant", `🩺 ${q}`);
+            state.step = "asking_dynamic";
+        } else {
+            askSex();
+        }
+    } else if (state.step === "asking_dynamic") {
+        // Guardar respuesta dinámica
+        state.dynamicAnswer = text;
         addMessage("user", text);
         askSex();
     } else if (state.step === "asking_sex") {
@@ -466,6 +518,15 @@ function processInput(raw) {
         let ageNum = parseInt(text);
         if (!isNaN(ageNum) && ageNum > 0 && ageNum < 120) {
             state.age = ageNum;
+            addMessage("user", text);
+            askDuration();
+        } else {
+            addStatusMessage("error", "Edad inválida (1-120).");
+        }
+    } else if (state.step === "asking_duration") {
+        let dur = parseInt(text);
+        if (!isNaN(dur) && dur >= 0 && dur < 365) {
+            state.duration = dur;
             addMessage("user", text);
             addMessage("assistant", "🤖 Consultando a Vitalia...");
             callVitaliaForSpecialty(state.symptom, state.sex, state.age).then(iaSpecialty => {
@@ -488,7 +549,7 @@ function processInput(raw) {
                 state.step = "waitingPlan";
             });
         } else {
-            addStatusMessage("error", "Edad inválida (1-120).");
+            addStatusMessage("error", "Ingrese un número válido de días (0-364).");
         }
     } else if (state.step === "waitingPlan") {
         let found = null;
