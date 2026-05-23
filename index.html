@@ -182,6 +182,7 @@ const resetBtn = document.getElementById('resetBtn');
 // ========== ESTADO ==========
 let state = { step: "symptom", symptom: "", sex: null, age: null, duration: null, city: null, specialty: null };
 let typingDiv = null;
+let typingTimeout = null;
 
 // ========== FUNCIONES UI ==========
 function addMessage(role, text, isHtml = false) {
@@ -197,23 +198,39 @@ function addMessage(role, text, isHtml = false) {
 }
 
 function showTyping() {
-    if (typingDiv) typingDiv.remove();
+    if (typingDiv) removeTyping();
     const div = document.createElement('div');
     div.className = 'message assistant typing-indicator';
-    div.innerHTML = '<div class="bubble">💬 Vitalia está consultando la IA...</div>';
+    div.innerHTML = '<div class="bubble">💬 Vitalia está escribiendo<span class="typing-dots">...</span></div>';
     msgDiv.appendChild(div);
     msgDiv.scrollTop = msgDiv.scrollHeight;
     typingDiv = div;
 }
 function removeTyping() {
     if (typingDiv) { typingDiv.remove(); typingDiv = null; }
+    if (typingTimeout) clearTimeout(typingTimeout);
+}
+
+// Respuesta con efecto "escribiendo..." (300-500ms)
+function replyWithTyping(text, isHtml = false, delay = 400) {
+    showTyping();
+    typingTimeout = setTimeout(() => {
+        removeTyping();
+        addMessage("assistant", text, isHtml);
+    }, delay);
+}
+
+// Respuesta inmediata (para errores o mensajes muy rápidos)
+function replyImmediately(text, isHtml = false) {
+    removeTyping();
+    addMessage("assistant", text, isHtml);
 }
 
 // ========== LLAMADA AL WORKER (IA) ==========
 const WORKER_URL = 'https://vitalia-groq.dianaml76.workers.dev/api/suggest';
 
 async function getSpecialtyFromAI(symptom, sex, age) {
-    showTyping();
+    showTyping(); // Indicador específico para la IA
     try {
         const response = await fetch(WORKER_URL, {
             method: 'POST',
@@ -224,7 +241,6 @@ async function getSpecialtyFromAI(symptom, sex, age) {
         const data = await response.json();
         removeTyping();
         let specialty = data.specialty || "Medicina General";
-        // CORRECCIÓN: niños menores de 13 años → Pediatría
         if (age < 13 && specialty !== "Pediatría" && specialty !== "Neonatología") {
             specialty = "Pediatría";
         }
@@ -236,7 +252,7 @@ async function getSpecialtyFromAI(symptom, sex, age) {
     }
 }
 
-// ========== LÓGICA LOCAL (FALLBACK) CON REGLA DE EDAD ==========
+// ========== LÓGICA LOCAL (FALLBACK) ==========
 const specialities = [
     { esp: "Neurología", kw: ["mareos", "vértigo", "debilidad pierna", "pesadez cabeza", "convulsiones", "desmayo", "dolor cabeza"], peso: 4 },
     { esp: "Cardiología", kw: ["dolor pecho", "palpitaciones", "taquicardia", "presión alta"], peso: 4 },
@@ -250,10 +266,7 @@ const specialities = [
     { esp: "Medicina General", kw: ["fiebre", "cansancio", "fatiga"], peso: 1 }
 ];
 function suggestSpecialtyLocal(symptom, sex, age) {
-    // CORRECCIÓN: niños menores de 13 años → Pediatría
-    if (age < 13) {
-        return "Pediatría";
-    }
+    if (age < 13) return "Pediatría";
     let lower = symptom.toLowerCase();
     let best = { esp: "Medicina General", score: 0 };
     for (let s of specialities) {
@@ -281,7 +294,7 @@ function urgencyLevel(symptom) {
     return { level: "🟢 PRIORIDAD BAJA", color: "#28a745", msg: "Puede agendar consulta regular." };
 }
 
-// ========== DOCUMENTOS POR ESPECIALIDAD ==========
+// ========== DOCUMENTOS ==========
 function getDocuments(esp) {
     const docs = {
         "Cardiología": ["Cédula", "Carnet", "Electrocardiograma previo"],
@@ -334,7 +347,7 @@ function ranking(esp, plan) {
     return { mejor: resultados[0], todos: resultados };
 }
 
-// ========== GEOLOCALIZACIÓN ==========
+// ========== GEOLOCALIZACIÓN Y COMPARTIR ==========
 function emergencyAction() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -343,122 +356,166 @@ function emergencyAction() {
         );
     } else alert("Tu navegador no soporta geolocalización. Llama al 911.");
 }
-
-// ========== COMPARTIR RESULTADO ==========
 function shareResult(specialty, hospital, copago, plan, urgency) {
     const text = `🏥 *Vitalia - Resumen de tu consulta*\n\n🩺 Especialidad sugerida: ${specialty}\n🏨 Hospital más económico: ${hospital}\n💰 Copago estimado: $${copago} USD (${plan})\n🚦 Nivel de urgencia: ${urgency}\n\n⚠️ Este es un consejo informativo, no reemplaza una evaluación médica presencial.`;
     navigator.clipboard.writeText(text).then(() => alert("✅ Resumen copiado al portapapeles."));
 }
 
-// ========== FLUJO PRINCIPAL (PREGUNTAS FIJAS) ==========
-function askSex() { addMessage("assistant", "📌 ¿Sexo biológico? (masculino / femenino)"); state.step = "asking_sex"; }
-function askAge() { addMessage("assistant", "📌 ¿Edad? (número)"); state.step = "asking_age"; }
-function askDuration() { addMessage("assistant", "⏳ ¿Cuántos días lleva con el síntoma?"); state.step = "asking_duration"; }
-function askCity() { addMessage("assistant", "📍 ¿En qué ciudad de Ecuador estás? (Quito, Guayaquil, Cuenca)"); state.step = "asking_city"; }
+// ========== PREGUNTAS CON EFECTO "ESCRIBIENDO..." ==========
+function askSex() { replyWithTyping("📌 ¿Sexo biológico? (masculino / femenino)"); state.step = "asking_sex"; }
+function askAge() { replyWithTyping("📌 ¿Edad? (número)"); state.step = "asking_age"; }
+function askDuration() { replyWithTyping("⏳ ¿Cuántos días lleva con el síntoma?"); state.step = "asking_duration"; }
+function askCity() { replyWithTyping("📍 ¿En qué ciudad de Ecuador estás? (Quito, Guayaquil, Cuenca)"); state.step = "asking_city"; }
 
+// ========== MOSTRAR RESULTADOS FINALES ==========
 async function showFinalResults() {
     const urgency = urgencyLevel(state.symptom);
     const docs = getDocuments(state.specialty);
-    addMessage("assistant", `🧠 Vitalia (IA) sugiere consultar con <strong>${state.specialty}</strong>.`, true);
-    addMessage("assistant", `📋 <strong>Documentos recomendados para tu consulta:</strong><br>${docs.map(d => `• ${d}`).join('<br>')}`, true);
-    addMessage("assistant", `<div style="padding:12px; border-radius:12px; background:${urgency.color}; color:white;">🚦 ${urgency.level}<br>${urgency.msg}</div>`, true);
-    
-    const container = document.createElement("div");
-    container.className = "plan-buttons";
-    for (let [nombre, info] of Object.entries(planes)) {
-        const btn = document.createElement("button");
-        btn.innerText = info.l;
-        btn.className = "plan-btn";
-        btn.onclick = () => {
-            const rank = ranking(state.specialty, nombre);
-            if (!rank) { addMessage("assistant", "No hay datos para esa especialidad."); return; }
-            let mejor = rank.mejor;
-            let cityMap = { quito: "Hospital Norte", guayaquil: "Hospital Centro", cuenca: "Hospital Sur" };
-            if (state.city && cityMap[state.city.toLowerCase()]) {
-                let preferred = cityMap[state.city.toLowerCase()];
-                if (rank.todos.find(h => h.hospital === preferred)) mejor = rank.todos.find(h => h.hospital === preferred);
-            }
-            let html = `<strong>✅ ${nombre}</strong> (cubre ${planes[nombre].c*100}%)<br><br>`;
-            html += `🏥 <strong>Más económico y cercano:</strong> ${mejor.hospital}<br>`;
-            html += `💰 <strong>Tu copago:</strong> $${mejor.copago}<br>`;
-            html += `📋 Costo base: $${mejor.costoBase}<br><br>`;
-            html += `<strong>Comparativa red:</strong><br>`;
-            rank.todos.forEach(h => { html += `• ${h.hospital}: copago $${h.copago} (base $${h.costoBase})<br>`; });
-            html += `<br><button id="shareBtnFinal" class="share-btn">📤 Compartir este resultado</button>`;
-            if (urgency.level.includes("URGENTE")) {
-                html += `<br><button id="emergencyBtnFinal" class="emergency-btn">🚨 Llamar a emergencias / Buscar hospital cercano</button>`;
-            }
-            addMessage("assistant", html, true);
+    // Mostrar especialidad con typing
+    replyWithTyping(`🧠 Vitalia (IA) sugiere consultar con <strong>${state.specialty}</strong>.`, true);
+    // Esperar a que termine ese mensaje antes de los siguientes (usamos setTimeout para no solapar)
+    setTimeout(() => {
+        replyWithTyping(`📋 <strong>Documentos recomendados para tu consulta:</strong><br>${docs.map(d => `• ${d}`).join('<br>')}`, true);
+        setTimeout(() => {
+            replyWithTyping(`<div style="padding:12px; border-radius:12px; background:${urgency.color}; color:white;">🚦 ${urgency.level}<br>${urgency.msg}</div>`, true);
             setTimeout(() => {
-                const share = document.getElementById("shareBtnFinal");
-                if (share) share.onclick = () => shareResult(state.specialty, mejor.hospital, mejor.copago, nombre, urgency.level);
-                const emerg = document.getElementById("emergencyBtnFinal");
-                if (emerg) emerg.onclick = () => emergencyAction();
-            }, 100);
-        };
-        container.appendChild(btn);
-    }
-    const wrapper = document.createElement("div");
-    wrapper.className = "message assistant";
-    const bubble = document.createElement("div");
-    bubble.className = "bubble";
-    bubble.appendChild(document.createTextNode("Elige tu plan de seguro para ver el copago exacto:"));
-    bubble.appendChild(container);
-    wrapper.appendChild(bubble);
-    msgDiv.appendChild(wrapper);
-    msgDiv.scrollTop = msgDiv.scrollHeight;
-    state.step = "finished";
+                // Botones de planes (se añaden directamente sin typing porque son elementos interactivos)
+                const container = document.createElement("div");
+                container.className = "plan-buttons";
+                for (let [nombre, info] of Object.entries(planes)) {
+                    const btn = document.createElement("button");
+                    btn.innerText = info.l;
+                    btn.className = "plan-btn";
+                    btn.onclick = () => {
+                        const rank = ranking(state.specialty, nombre);
+                        if (!rank) { replyImmediately("No hay datos para esa especialidad."); return; }
+                        let mejor = rank.mejor;
+                        let cityMap = { quito: "Hospital Norte", guayaquil: "Hospital Centro", cuenca: "Hospital Sur" };
+                        if (state.city && cityMap[state.city.toLowerCase()]) {
+                            let preferred = cityMap[state.city.toLowerCase()];
+                            if (rank.todos.find(h => h.hospital === preferred)) mejor = rank.todos.find(h => h.hospital === preferred);
+                        }
+                        let html = `<strong>✅ ${nombre}</strong> (cubre ${planes[nombre].c*100}%)<br><br>`;
+                        html += `🏥 <strong>Más económico y cercano:</strong> ${mejor.hospital}<br>`;
+                        html += `💰 <strong>Tu copago:</strong> $${mejor.copago}<br>`;
+                        html += `📋 Costo base: $${mejor.costoBase}<br><br>`;
+                        html += `<strong>Comparativa red:</strong><br>`;
+                        rank.todos.forEach(h => { html += `• ${h.hospital}: copago $${h.copago} (base $${h.costoBase})<br>`; });
+                        html += `<br><button id="shareBtnFinal" class="share-btn">📤 Compartir este resultado</button>`;
+                        if (urgency.level.includes("URGENTE")) {
+                            html += `<br><button id="emergencyBtnFinal" class="emergency-btn">🚨 Llamar a emergencias / Buscar hospital cercano</button>`;
+                        }
+                        addMessage("assistant", html, true);
+                        setTimeout(() => {
+                            const share = document.getElementById("shareBtnFinal");
+                            if (share) share.onclick = () => shareResult(state.specialty, mejor.hospital, mejor.copago, nombre, urgency.level);
+                            const emerg = document.getElementById("emergencyBtnFinal");
+                            if (emerg) emerg.onclick = () => emergencyAction();
+                        }, 100);
+                    };
+                    container.appendChild(btn);
+                }
+                const wrapper = document.createElement("div");
+                wrapper.className = "message assistant";
+                const bubble = document.createElement("div");
+                bubble.className = "bubble";
+                bubble.appendChild(document.createTextNode("Elige tu plan de seguro para ver el copago exacto:"));
+                bubble.appendChild(container);
+                wrapper.appendChild(bubble);
+                msgDiv.appendChild(wrapper);
+                msgDiv.scrollTop = msgDiv.scrollHeight;
+                state.step = "finished";
+            }, 500);
+        }, 500);
+    }, 500);
 }
 
 // ========== RECONOCIMIENTO DE SALUDOS ==========
 function isGreeting(text) {
-    const greetings = ["hola", "buenos días", "buenas tardes", "buenas noches", "hey", "saludos", "qué tal", "buen día"];
+    const greetings = ["hola", "buenos días", "buenas tardes", "buenas noches", "hey", "saludos", "qué tal", "buen día", "buenas", "buen dia"];
     return greetings.some(g => text.toLowerCase().includes(g));
 }
 
+// ========== PROCESAR ENTRADA DEL USUARIO ==========
 async function processInput(raw) {
     let text = raw.trim();
     if (!text) return;
     addMessage("user", text);
     
-    if (state.step === "symptom" && isGreeting(text)) {
-        addMessage("assistant", "¡Hola! 😊 Cuéntame, ¿cuál es tu síntoma principal?");
+    // Comandos de reinicio siempre disponibles
+    if (text.toLowerCase() === "nuevo" || text.toLowerCase() === "reiniciar") {
+        resetChat();
         return;
     }
     
+    // Manejo de saludos según el paso actual (con typing)
+    if (isGreeting(text)) {
+        let greetingResponse = "¡Hola! 😊 ";
+        if (state.step === "symptom") greetingResponse += "Cuéntame, ¿cuál es tu síntoma principal?";
+        else if (state.step === "asking_sex") greetingResponse += "¿Podrías indicarme tu sexo? (masculino / femenino)";
+        else if (state.step === "asking_age") greetingResponse += "¿Cuál es tu edad?";
+        else if (state.step === "asking_duration") greetingResponse += "¿Cuántos días llevas con el síntoma?";
+        else if (state.step === "asking_city") greetingResponse += "¿En qué ciudad de Ecuador te encuentras? (Quito, Guayaquil, Cuenca)";
+        else if (state.step === "finished") greetingResponse += "Si deseas iniciar una nueva consulta, escribe 'nuevo' o presiona el botón 'Nueva consulta'.";
+        else greetingResponse += "¿En qué puedo ayudarte?";
+        replyWithTyping(greetingResponse);
+        return;
+    }
+    
+    // Flujo normal según el paso
     if (state.step === "symptom") {
         state.symptom = text;
         askSex();
     } else if (state.step === "asking_sex") {
         let lower = text.toLowerCase();
-        if (lower === "masculino" || lower === "femenino") { state.sex = lower; askAge(); }
-        else addMessage("assistant", "Escribe 'masculino' o 'femenino'.");
+        if (lower === "masculino" || lower === "femenino") {
+            state.sex = lower;
+            askAge();
+        } else {
+            replyWithTyping("Escribe 'masculino' o 'femenino'. 😊");
+        }
     } else if (state.step === "asking_age") {
         let a = parseInt(text);
-        if (!isNaN(a) && a > 0 && a < 120) { state.age = a; askDuration(); }
-        else addMessage("assistant", "Edad inválida (1-120).");
+        if (!isNaN(a) && a > 0 && a < 120) {
+            state.age = a;
+            askDuration();
+        } else {
+            replyWithTyping("Edad inválida. Por favor, escribe un número entre 1 y 120.");
+        }
     } else if (state.step === "asking_duration") {
         let d = parseInt(text);
-        if (!isNaN(d) && d >= 0 && d < 365) { state.duration = d; askCity(); }
-        else addMessage("assistant", "Número de días inválido.");
+        if (!isNaN(d) && d >= 0 && d < 365) {
+            state.duration = d;
+            askCity();
+        } else {
+            replyWithTyping("Número de días inválido (0-364).");
+        }
     } else if (state.step === "asking_city") {
         let cityLower = text.toLowerCase();
-        if (cityLower === "quito" || cityLower === "guayaquil" || cityLower === "cuenca") state.city = cityLower;
-        else state.city = "quito";
+        if (cityLower === "quito" || cityLower === "guayaquil" || cityLower === "cuenca") {
+            state.city = cityLower;
+        } else {
+            state.city = "quito";
+            replyWithTyping("No reconocí esa ciudad. Usaremos Quito como referencia. 😊");
+            // Esperamos a que termine el mensaje anterior antes de continuar
+            await new Promise(r => setTimeout(r, 800));
+        }
         let specialty = await getSpecialtyFromAI(state.symptom, state.sex, state.age);
         state.specialty = specialty;
         await showFinalResults();
     } else if (state.step === "finished") {
-        addMessage("assistant", "Presiona 'Nueva consulta' para iniciar otra.");
+        replyWithTyping("Presiona 'Nueva consulta' para iniciar otra consulta o escribe 'nuevo'.");
     }
 }
 
+// ========== REINICIAR CONVERSACIÓN ==========
 function resetChat() {
     state = { step: "symptom", symptom: "", sex: null, age: null, duration: null, city: null, specialty: null };
     while (msgDiv.children.length > 1) msgDiv.removeChild(msgDiv.lastChild);
-    addMessage("assistant", "🔄 Conversación reiniciada. Cuéntame tu síntoma principal.");
+    replyWithTyping("🔄 Conversación reiniciada. Cuéntame tu síntoma principal.");
 }
 
+// ========== EVENTOS ==========
 sendBtn.onclick = () => { let v = userInput.value.trim(); if (v) processInput(v); userInput.value = ""; };
 resetBtn.onclick = () => resetChat();
 userInput.addEventListener("keypress", e => { if (e.key === "Enter") sendBtn.click(); });
