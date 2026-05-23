@@ -223,8 +223,12 @@ async function getSpecialtyFromAI(symptom, sex, age) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         removeTyping();
-        if (data.specialty) return data.specialty;
-        throw new Error('Respuesta inválida');
+        let specialty = data.specialty || "Medicina General";
+        // CORRECCIÓN: niños menores de 13 años → Pediatría
+        if (age < 13 && specialty !== "Pediatría" && specialty !== "Neonatología") {
+            specialty = "Pediatría";
+        }
+        return specialty;
     } catch (error) {
         removeTyping();
         console.error('Error con Worker/Groq:', error);
@@ -232,7 +236,7 @@ async function getSpecialtyFromAI(symptom, sex, age) {
     }
 }
 
-// ========== LÓGICA LOCAL (FALLBACK) CON NUEVAS ESPECIALIDADES ==========
+// ========== LÓGICA LOCAL (FALLBACK) CON REGLA DE EDAD ==========
 const specialities = [
     { esp: "Neurología", kw: ["mareos", "vértigo", "debilidad pierna", "pesadez cabeza", "convulsiones", "desmayo", "dolor cabeza"], peso: 4 },
     { esp: "Cardiología", kw: ["dolor pecho", "palpitaciones", "taquicardia", "presión alta"], peso: 4 },
@@ -246,6 +250,10 @@ const specialities = [
     { esp: "Medicina General", kw: ["fiebre", "cansancio", "fatiga"], peso: 1 }
 ];
 function suggestSpecialtyLocal(symptom, sex, age) {
+    // CORRECCIÓN: niños menores de 13 años → Pediatría
+    if (age < 13) {
+        return "Pediatría";
+    }
     let lower = symptom.toLowerCase();
     let best = { esp: "Medicina General", score: 0 };
     for (let s of specialities) {
@@ -273,7 +281,7 @@ function urgencyLevel(symptom) {
     return { level: "🟢 PRIORIDAD BAJA", color: "#28a745", msg: "Puede agendar consulta regular." };
 }
 
-// ========== DOCUMENTOS POR ESPECIALIDAD (actualizado) ==========
+// ========== DOCUMENTOS POR ESPECIALIDAD ==========
 function getDocuments(esp) {
     const docs = {
         "Cardiología": ["Cédula", "Carnet", "Electrocardiograma previo"],
@@ -289,7 +297,7 @@ function getDocuments(esp) {
     return docs[esp] || ["Cédula", "Carnet"];
 }
 
-// ========== PLANES Y HOSPITALES (con precios para nuevas especialidades) ==========
+// ========== PLANES Y HOSPITALES ==========
 const planes = {
     "Plan Básico": { c: 0.60, l: "Básico (pagas 40%)" },
     "Plan Estándar": { c: 0.75, l: "Estándar (pagas 25%)" },
@@ -413,7 +421,6 @@ async function processInput(raw) {
     if (!text) return;
     addMessage("user", text);
     
-    // Si es un saludo y estamos al inicio (symptom), responder amigablemente y no avanzar
     if (state.step === "symptom" && isGreeting(text)) {
         addMessage("assistant", "¡Hola! 😊 Cuéntame, ¿cuál es tu síntoma principal?");
         return;
