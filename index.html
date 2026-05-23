@@ -154,14 +154,14 @@
         <button id="darkModeToggle" class="theme-toggle">🌙 Modo oscuro</button>
     </div>
     <div class="messages" id="chatMessages">
-        <div class="message assistant"><div class="bubble">👋 ¡Hola! Soy Vitalia, tu asistente de salud con IA. Cuéntame tu síntoma principal y te ayudaré a identificar la especialidad más adecuada.<br>🤖 Usaré inteligencia artificial (Groq) para sugerir la especialidad.</div></div>
+        <div class="message assistant"><div class="bubble">👋 Hola, soy Vitalia. Cuéntame tu síntoma principal.<br>🤖 Usaré inteligencia artificial (Groq) para sugerir la especialidad.</div></div>
     </div>
     <div class="input-area">
         <input type="text" id="userInput" placeholder="Escribe tu mensaje...">
         <button id="sendBtn">Enviar</button>
         <button id="resetBtn" class="reset-btn">↻ Nueva consulta</button>
     </div>
-    <footer>💰 Planes: Básico (40%), Estándar (25%), Premium (10%) · ⚠️ Solo informativo, no reemplaza consulta médica.</footer>
+    <footer>💰 Planes: Básico (pagas 40%), Estándar (25%), Premium (10%) · ⚠️ Solo informativo, no reemplaza consulta médica.</footer>
 </div>
 
 <script>
@@ -209,12 +209,6 @@ function removeTyping() {
     if (typingDiv) { typingDiv.remove(); typingDiv = null; }
 }
 
-// ========== DETECCIÓN DE SALUDOS ==========
-function isGreeting(text) {
-    const greetings = ["hola", "buenos días", "buenas tardes", "buenas noches", "hey", "saludos", "qué tal", "como estás", "buen día", "holi"];
-    return greetings.some(g => text.toLowerCase().includes(g));
-}
-
 // ========== LLAMADA AL WORKER (IA) ==========
 const WORKER_URL = 'https://vitalia-groq.dianaml76.workers.dev/api/suggest';
 
@@ -234,17 +228,20 @@ async function getSpecialtyFromAI(symptom, sex, age) {
     } catch (error) {
         removeTyping();
         console.error('Error con Worker/Groq:', error);
-        // Fallback a lógica local
         return suggestSpecialtyLocal(symptom, sex, age);
     }
 }
 
-// ========== LÓGICA LOCAL DE ESPECIALIDAD (FALLBACK) ==========
+// ========== LÓGICA LOCAL (FALLBACK) CON NUEVAS ESPECIALIDADES ==========
 const specialities = [
     { esp: "Neurología", kw: ["mareos", "vértigo", "debilidad pierna", "pesadez cabeza", "convulsiones", "desmayo", "dolor cabeza"], peso: 4 },
     { esp: "Cardiología", kw: ["dolor pecho", "palpitaciones", "taquicardia", "presión alta"], peso: 4 },
     { esp: "Traumatología", kw: ["fractura", "esguince", "rodilla", "hombro", "dolor espalda", "caída"], peso: 3 },
     { esp: "Alergología", kw: ["ronchas", "camarones", "mariscos", "urticaria"], peso: 4 },
+    { esp: "Nefrología", kw: ["riñón", "insuficiencia renal", "diálisis", "piedras en el riñón", "cálculos renales", "creatinina alta"], peso: 3 },
+    { esp: "Hematología", kw: ["anemia", "sangrado fácil", "moretones sin causa", "leucemia", "coágulos", "trombosis"], peso: 3 },
+    { esp: "Geriatría", kw: ["adulto mayor", "anciano", "caídas frecuentes", "problemas de memoria", "debilidad general", "polifarmacia"], peso: 3 },
+    { esp: "Pediatría", kw: ["niño", "bebé", "pediátrico", "vacunas", "fiebre en niño", "dolor de estómago en niño"], peso: 3 },
     { esp: "Gastroenterología", kw: ["dolor abdominal", "reflujo", "diarrea"], peso: 2 },
     { esp: "Medicina General", kw: ["fiebre", "cansancio", "fatiga"], peso: 1 }
 ];
@@ -259,6 +256,10 @@ function suggestSpecialtyLocal(symptom, sex, age) {
     let esp = best.esp;
     if (esp === "Gastroenterología" && lower.includes("dolor abdominal") && sex === "femenino") esp = "Ginecología";
     if (lower.includes("testículos") || lower.includes("orinar")) esp = "Urología";
+    if (lower.includes("riñón") || lower.includes("creatinina")) esp = "Nefrología";
+    if (lower.includes("anemia") || lower.includes("sangrado")) esp = "Hematología";
+    if (lower.includes("adulto mayor") || lower.includes("anciano")) esp = "Geriatría";
+    if (lower.includes("niño") || lower.includes("bebé")) esp = "Pediatría";
     return esp;
 }
 
@@ -272,37 +273,45 @@ function urgencyLevel(symptom) {
     return { level: "🟢 PRIORIDAD BAJA", color: "#28a745", msg: "Puede agendar consulta regular." };
 }
 
-// ========== DOCUMENTOS POR ESPECIALIDAD ==========
+// ========== DOCUMENTOS POR ESPECIALIDAD (actualizado) ==========
 function getDocuments(esp) {
     const docs = {
         "Cardiología": ["Cédula", "Carnet", "Electrocardiograma previo"],
         "Neurología": ["Cédula", "Carnet", "Imágenes (RM/TC si tiene)"],
         "Traumatología": ["Cédula", "Carnet", "Radiografías", "Informe de accidente"],
         "Alergología": ["Cédula", "Carnet", "Descripción de reacciones alérgicas"],
+        "Nefrología": ["Cédula", "Carnet", "Análisis de sangre (creatinina, urea)", "Ecografía renal"],
+        "Hematología": ["Cédula", "Carnet", "Hemograma completo", "Estudios de coagulación"],
+        "Geriatría": ["Cédula", "Carnet", "Lista completa de medicamentos", "Informe de caídas"],
+        "Pediatría": ["Cédula del niño", "Carnet del seguro", "Cartilla de vacunación", "Historial de crecimiento"],
         "Medicina General": ["Cédula", "Carnet", "Lista de medicamentos actuales"]
     };
     return docs[esp] || ["Cédula", "Carnet"];
 }
 
-// ========== PLANES Y HOSPITALES (Ciudades de Ecuador) ==========
+// ========== PLANES Y HOSPITALES (con precios para nuevas especialidades) ==========
 const planes = {
     "Plan Básico": { c: 0.60, l: "Básico (pagas 40%)" },
     "Plan Estándar": { c: 0.75, l: "Estándar (pagas 25%)" },
     "Plan Premium": { c: 0.90, l: "Premium (pagas 10%)" }
 };
-// Hospitales renombrados según ciudades de Ecuador
 const hosp = {
-    "Hospital Quito Sur": { "Medicina General":45, "Neurología":60, "Traumatología":60, "Cardiología":60, "Alergología":60, "Ginecología":55, "Urología":55 },
-    "Hospital Guayaquil": { "Medicina General":40, "Neurología":55, "Traumatología":55, "Cardiología":55, "Alergología":50, "Ginecología":50, "Urología":50 },
-    "Hospital Cuenca": { "Medicina General":42, "Neurología":58, "Traumatología":58, "Cardiología":58, "Alergología":55, "Ginecología":52, "Urología":52 }
+    "Hospital Norte": {
+        "Medicina General":45, "Neurología":60, "Traumatología":60, "Cardiología":60,
+        "Alergología":60, "Ginecología":55, "Urología":55, "Nefrología":58,
+        "Hematología":62, "Geriatría":55, "Pediatría":50
+    },
+    "Hospital Centro": {
+        "Medicina General":40, "Neurología":55, "Traumatología":55, "Cardiología":55,
+        "Alergología":50, "Ginecología":50, "Urología":50, "Nefrología":52,
+        "Hematología":56, "Geriatría":50, "Pediatría":45
+    },
+    "Hospital Sur": {
+        "Medicina General":42, "Neurología":58, "Traumatología":58, "Cardiología":58,
+        "Alergología":55, "Ginecología":52, "Urología":52, "Nefrología":55,
+        "Hematología":58, "Geriatría":52, "Pediatría":47
+    }
 };
-// Mapeo de ciudad ingresada a hospital
-const cityToHospital = {
-    "quito": "Hospital Quito Sur",
-    "guayaquil": "Hospital Guayaquil",
-    "cuenca": "Hospital Cuenca"
-};
-
 function copago(cb, c) { return Math.round(cb * (1 - c)); }
 function ranking(esp, plan) {
     let p = planes[plan];
@@ -356,10 +365,10 @@ async function showFinalResults() {
             const rank = ranking(state.specialty, nombre);
             if (!rank) { addMessage("assistant", "No hay datos para esa especialidad."); return; }
             let mejor = rank.mejor;
-            // Usar la ciudad ingresada por el usuario
-            if (state.city && cityToHospital[state.city.toLowerCase()]) {
-                let preferredHospital = cityToHospital[state.city.toLowerCase()];
-                if (rank.todos.find(h => h.hospital === preferredHospital)) mejor = rank.todos.find(h => h.hospital === preferredHospital);
+            let cityMap = { quito: "Hospital Norte", guayaquil: "Hospital Centro", cuenca: "Hospital Sur" };
+            if (state.city && cityMap[state.city.toLowerCase()]) {
+                let preferred = cityMap[state.city.toLowerCase()];
+                if (rank.todos.find(h => h.hospital === preferred)) mejor = rank.todos.find(h => h.hospital === preferred);
             }
             let html = `<strong>✅ ${nombre}</strong> (cubre ${planes[nombre].c*100}%)<br><br>`;
             html += `🏥 <strong>Más económico y cercano:</strong> ${mejor.hospital}<br>`;
@@ -393,15 +402,21 @@ async function showFinalResults() {
     state.step = "finished";
 }
 
+// ========== RECONOCIMIENTO DE SALUDOS ==========
+function isGreeting(text) {
+    const greetings = ["hola", "buenos días", "buenas tardes", "buenas noches", "hey", "saludos", "qué tal", "buen día"];
+    return greetings.some(g => text.toLowerCase().includes(g));
+}
+
 async function processInput(raw) {
     let text = raw.trim();
     if (!text) return;
     addMessage("user", text);
     
-    // Detectar saludos solo en el primer paso (symptom)
+    // Si es un saludo y estamos al inicio (symptom), responder amigablemente y no avanzar
     if (state.step === "symptom" && isGreeting(text)) {
-        addMessage("assistant", "👋 ¡Hola! Cuéntame, ¿cuál es tu síntoma principal? (por ejemplo: dolor de cabeza, fiebre, mareos, etc.)");
-        return; // No avanza al siguiente paso
+        addMessage("assistant", "¡Hola! 😊 Cuéntame, ¿cuál es tu síntoma principal?");
+        return;
     }
     
     if (state.step === "symptom") {
@@ -421,15 +436,11 @@ async function processInput(raw) {
         else addMessage("assistant", "Número de días inválido.");
     } else if (state.step === "asking_city") {
         let cityLower = text.toLowerCase();
-        if (cityLower === "quito" || cityLower === "guayaquil" || cityLower === "cuenca") {
-            state.city = cityLower;
-            // Llamar a la IA para obtener la especialidad
-            let specialty = await getSpecialtyFromAI(state.symptom, state.sex, state.age);
-            state.specialty = specialty;
-            await showFinalResults();
-        } else {
-            addMessage("assistant", "Por favor, escribe una ciudad válida: Quito, Guayaquil o Cuenca.");
-        }
+        if (cityLower === "quito" || cityLower === "guayaquil" || cityLower === "cuenca") state.city = cityLower;
+        else state.city = "quito";
+        let specialty = await getSpecialtyFromAI(state.symptom, state.sex, state.age);
+        state.specialty = specialty;
+        await showFinalResults();
     } else if (state.step === "finished") {
         addMessage("assistant", "Presiona 'Nueva consulta' para iniciar otra.");
     }
