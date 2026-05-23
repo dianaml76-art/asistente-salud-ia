@@ -157,7 +157,7 @@
         <div class="message assistant"><div class="bubble">👋 Hola, soy Vitalia. Cuéntame tu síntoma principal.<br>🤖 Usaré inteligencia artificial (Groq) para sugerir la especialidad.</div></div>
     </div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Escribe tu síntoma...">
+        <input type="text" id="userInput" placeholder="Escribe tu mensaje...">
         <button id="sendBtn">Enviar</button>
         <button id="resetBtn" class="reset-btn">↻ Nueva consulta</button>
     </div>
@@ -207,6 +207,13 @@ function showTyping() {
 }
 function removeTyping() {
     if (typingDiv) { typingDiv.remove(); typingDiv = null; }
+}
+
+// ========== FILTRAR SALUDOS ==========
+function isGreeting(text) {
+    const greetings = ["hola", "buenos días", "buenas tardes", "buenas noches", "hey", "saludos", "qué tal", "como estás", "holi", "hola qué tal"];
+    const lower = text.toLowerCase();
+    return greetings.some(g => lower.includes(g));
 }
 
 // ========== LLAMADA AL WORKER (IA) ==========
@@ -278,16 +285,16 @@ function getDocuments(esp) {
     return docs[esp] || ["Cédula", "Carnet"];
 }
 
-// ========== PLANES Y HOSPITALES ==========
+// ========== PLANES Y HOSPITALES (mapeo por ciudad real) ==========
 const planes = {
     "Plan Básico": { c: 0.60, l: "Básico (pagas 40%)" },
     "Plan Estándar": { c: 0.75, l: "Estándar (pagas 25%)" },
     "Plan Premium": { c: 0.90, l: "Premium (pagas 10%)" }
 };
 const hosp = {
-    "Hospital Norte": { "Medicina General":45, "Neurología":60, "Traumatología":60, "Cardiología":60, "Alergología":60, "Ginecología":55, "Urología":55 },
-    "Hospital Centro": { "Medicina General":40, "Neurología":55, "Traumatología":55, "Cardiología":55, "Alergología":50, "Ginecología":50, "Urología":50 },
-    "Hospital Sur": { "Medicina General":42, "Neurología":58, "Traumatología":58, "Cardiología":58, "Alergología":55, "Ginecología":52, "Urología":52 }
+    "Hospital Norte (Quito)": { "Medicina General":45, "Neurología":60, "Traumatología":60, "Cardiología":60, "Alergología":60, "Ginecología":55, "Urología":55 },
+    "Hospital Centro (Guayaquil)": { "Medicina General":40, "Neurología":55, "Traumatología":55, "Cardiología":55, "Alergología":50, "Ginecología":50, "Urología":50 },
+    "Hospital Sur (Cuenca)": { "Medicina General":42, "Neurología":58, "Traumatología":58, "Cardiología":58, "Alergología":55, "Ginecología":52, "Urología":52 }
 };
 function copago(cb, c) { return Math.round(cb * (1 - c)); }
 function ranking(esp, plan) {
@@ -302,6 +309,13 @@ function ranking(esp, plan) {
     resultados.sort((a, b) => a.copago - b.copago);
     return { mejor: resultados[0], todos: resultados };
 }
+
+// Mapeo de ciudad ingresada por el usuario al nombre del hospital
+const cityToHospital = {
+    "quito": "Hospital Norte (Quito)",
+    "guayaquil": "Hospital Centro (Guayaquil)",
+    "cuenca": "Hospital Sur (Cuenca)"
+};
 
 // ========== GEOLOCALIZACIÓN ==========
 function emergencyAction() {
@@ -323,7 +337,7 @@ function shareResult(specialty, hospital, copago, plan, urgency) {
 function askSex() { addMessage("assistant", "📌 ¿Sexo biológico? (masculino / femenino)"); state.step = "asking_sex"; }
 function askAge() { addMessage("assistant", "📌 ¿Edad? (número)"); state.step = "asking_age"; }
 function askDuration() { addMessage("assistant", "⏳ ¿Cuántos días lleva con el síntoma?"); state.step = "asking_duration"; }
-function askCity() { addMessage("assistant", "📍 ¿En qué ciudad estás? (Norte, Centro, Sur)"); state.step = "asking_city"; }
+function askCity() { addMessage("assistant", "📍 ¿En qué ciudad de Ecuador vives? (Quito, Guayaquil, Cuenca)"); state.step = "asking_city"; }
 
 async function showFinalResults() {
     const urgency = urgencyLevel(state.symptom);
@@ -342,13 +356,14 @@ async function showFinalResults() {
             const rank = ranking(state.specialty, nombre);
             if (!rank) { addMessage("assistant", "No hay datos para esa especialidad."); return; }
             let mejor = rank.mejor;
-            let cityMap = { norte: "Hospital Norte", centro: "Hospital Centro", sur: "Hospital Sur" };
-            if (state.city && cityMap[state.city.toLowerCase()]) {
-                let preferred = cityMap[state.city.toLowerCase()];
-                if (rank.todos.find(h => h.hospital === preferred)) mejor = rank.todos.find(h => h.hospital === preferred);
+            // Si el usuario especificó una ciudad, intentar recomendar el hospital correspondiente
+            if (state.city && cityToHospital[state.city.toLowerCase()]) {
+                let preferred = cityToHospital[state.city.toLowerCase()];
+                let found = rank.todos.find(h => h.hospital === preferred);
+                if (found) mejor = found;
             }
             let html = `<strong>✅ ${nombre}</strong> (cubre ${planes[nombre].c*100}%)<br><br>`;
-            html += `🏥 <strong>Más económico y cercano:</strong> ${mejor.hospital}<br>`;
+            html += `🏥 <strong>Hospital más económico y cercano a ${state.city || "tu ciudad"}:</strong> ${mejor.hospital}<br>`;
             html += `💰 <strong>Tu copago:</strong> $${mejor.copago}<br>`;
             html += `📋 Costo base: $${mejor.costoBase}<br><br>`;
             html += `<strong>Comparativa red:</strong><br>`;
@@ -382,6 +397,14 @@ async function showFinalResults() {
 async function processInput(raw) {
     let text = raw.trim();
     if (!text) return;
+    
+    // Manejar saludos: si el usuario saluda, responder amigablemente y volver a pedir síntoma
+    if (state.step === "symptom" && isGreeting(text)) {
+        addMessage("user", text);
+        addMessage("assistant", "¡Hola! 😊 Cuéntame, ¿cuál es tu síntoma principal? (ej. dolor de cabeza, fiebre, mareos)");
+        return; // No avanzamos al flujo de preguntas
+    }
+    
     addMessage("user", text);
     
     if (state.step === "symptom") {
@@ -401,8 +424,14 @@ async function processInput(raw) {
         else addMessage("assistant", "Número de días inválido.");
     } else if (state.step === "asking_city") {
         let cityLower = text.toLowerCase();
-        if (cityLower === "norte" || cityLower === "centro" || cityLower === "sur") state.city = cityLower;
-        else state.city = "centro";
+        // Validar que sea una ciudad válida (Quito, Guayaquil, Cuenca)
+        if (cityLower === "quito" || cityLower === "guayaquil" || cityLower === "cuenca") {
+            state.city = cityLower;
+        } else {
+            // Si no es válida, usar Guayaquil por defecto o mostrar mensaje
+            addMessage("assistant", "No reconocí esa ciudad. Usaremos Guayaquil como referencia. (Puedes escribir Quito, Guayaquil o Cuenca)");
+            state.city = "guayaquil";
+        }
         // Llamar a la IA para obtener la especialidad
         let specialty = await getSpecialtyFromAI(state.symptom, state.sex, state.age);
         state.specialty = specialty;
