@@ -3,42 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Vitalia – Asistente médico conversacional</title>
+    <title>Vitalia – Asistente de Salud con IA</title>
     <style>
         :root {
             --primary-blue: #2A6F9E; --primary-dark: #1E5A7F; --secondary-green: #2E9F7A;
-            --secondary-light: #E0F2E9; --bg-body: #F7F9FB; --bg-chat: #FFFFFF;
-            --text-primary: #0F1724; --text-secondary: #4A5568; --warning: #E7B800;
-            --warning-light: #FEF4E6; --error: #D64545; --error-light: #FCE8E8;
-            --accent-soft: #A9D6E5; --border-light: #E2E8F0;
-            --header-gradient-start: #1E5A7F; --header-gradient-end: #2A6F9E;
-            --assistant-bubble-bg: #FFFFFF; --assistant-bubble-border: #E2E8F0;
-            --user-bubble-bg: #2A6F9E; --user-bubble-gradient: linear-gradient(145deg, #2A6F9E, #1E5A7F);
-            --plan-btn-bg: #ECF3F8; --plan-btn-text: #2A6F9E; --reset-btn-bg: #ECF3F8;
-            --reset-btn-border: #CFDFE8; --footer-text: #5F7F9C;
+            --bg-body: #F7F9FB; --bg-chat: #FFFFFF; --text-primary: #0F1724;
+            --border-light: #E2E8F0; --accent-soft: #A9D6E5;
         }
         body.dark {
-            --primary-blue: #5B9BC7; --primary-dark: #3A7BA0; --secondary-green: #4DB38E;
-            --secondary-light: #1A3A2E; --bg-body: #121826; --bg-chat: #1A202C;
-            --text-primary: #EDF2F7; --text-secondary: #A0AEC0; --warning: #F5C542;
-            --warning-light: #3A3410; --error: #E57373; --error-light: #3C1E1E;
-            --accent-soft: #2B5C74; --border-light: #2D3748;
-            --header-gradient-start: #0F2A3B; --header-gradient-end: #1E4A6F;
-            --assistant-bubble-bg: #2D3748; --assistant-bubble-border: #4A5568;
-            --user-bubble-bg: #2A6F9E; --user-bubble-gradient: linear-gradient(145deg, #3A7BA0, #1E5A7F);
-            --plan-btn-bg: #2D3748; --plan-btn-text: #A9D6E5; --reset-btn-bg: #2D3748;
-            --reset-btn-border: #4A5568; --footer-text: #718096;
+            --bg-body: #121826; --bg-chat: #1A202C; --text-primary: #EDF2F7;
+            --border-light: #2D3748; --accent-soft: #2B5C74;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: var(--bg-body);
-            font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+            font-family: system-ui, 'Segoe UI', sans-serif;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
-            transition: background 0.2s;
         }
         .chat {
             max-width: 880px;
@@ -51,20 +35,17 @@
             flex-direction: column;
             height: 85vh;
             max-height: 820px;
-            transition: background 0.2s;
         }
         .chat-header {
-            background: linear-gradient(135deg, var(--header-gradient-start), var(--header-gradient-end));
+            background: linear-gradient(135deg, #1E5A7F, #2A6F9E);
             color: white;
             padding: 22px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
         }
         .chat-header h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
-        .theme-toggle, .share-btn-header {
+        .theme-toggle {
             background: rgba(255,255,255,0.2);
             border: none;
             border-radius: 40px;
@@ -72,10 +53,7 @@
             color: white;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.85rem;
         }
-        .theme-toggle:hover, .share-btn-header:hover { background: rgba(255,255,255,0.3); transform: scale(1.02); }
         .messages {
             flex: 1;
             overflow-y: auto;
@@ -93,19 +71,14 @@
             border-radius: 28px;
             line-height: 1.45;
             font-size: 0.95rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            background: var(--bg-chat);
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
         }
         .user .bubble {
-            background: var(--user-bubble-bg);
-            background-image: var(--user-bubble-gradient);
+            background: #2A6F9E;
             color: white;
-            border-bottom-right-radius: 8px;
-        }
-        .assistant .bubble {
-            background: var(--assistant-bubble-bg);
-            color: var(--text-primary);
-            border: 1px solid var(--assistant-bubble-border);
-            border-bottom-left-radius: 8px;
+            border: none;
         }
         .input-area {
             padding: 16px 20px 22px;
@@ -123,75 +96,33 @@
             font-size: 1rem;
             background: var(--bg-chat);
             color: var(--text-primary);
-            transition: 0.2s;
-        }
-        .input-area input:focus {
-            outline: none;
-            border-color: var(--primary-blue);
-            box-shadow: 0 0 0 3px rgba(42,111,158,0.2);
         }
         .input-area button {
-            background: linear-gradient(145deg, var(--primary-blue), var(--primary-dark));
+            background: #2A6F9E;
             border: none;
             padding: 0 28px;
             border-radius: 60px;
             font-weight: 600;
             color: white;
             cursor: pointer;
-            transition: 0.2s;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
-        .input-area button:hover { transform: translateY(-2px); opacity: 0.95; }
         .input-area .reset-btn {
-            background: var(--reset-btn-bg);
-            color: var(--primary-blue);
-            box-shadow: none;
-            border: 1px solid var(--reset-btn-border);
+            background: #e9ecef;
+            color: #2A6F9E;
         }
         .plan-buttons { display: flex; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
         .plan-btn {
-            background: var(--plan-btn-bg);
+            background: #ecf3f8;
             border: none;
             padding: 10px 22px;
             border-radius: 60px;
             font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.2s;
-            color: var(--plan-btn-text);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            color: #2A6F9E;
         }
-        .plan-btn:hover { background: var(--accent-soft); transform: translateY(-2px); }
-        footer {
-            font-size: 0.7rem;
-            text-align: center;
-            padding: 12px;
-            background: var(--bg-chat);
-            border-top: 1px solid var(--border-light);
-            color: var(--footer-text);
-        }
-        .typing-indicator .bubble {
-            background: var(--assistant-bubble-bg);
-            border: 1px solid var(--assistant-bubble-border);
-            font-style: italic;
-            color: var(--text-secondary);
-        }
-        .typing-dots::after {
-            content: '...';
-            animation: typing 1.5s infinite;
-            display: inline-block;
-            width: 24px;
-            text-align: left;
-        }
-        @keyframes typing {
-            0% { content: '.'; }
-            33% { content: '..'; }
-            66% { content: '...'; }
-            100% { content: '.'; }
-        }
-        .emergency-btn, .share-btn {
+        .share-btn, .emergency-btn {
             background: var(--accent-soft);
-            color: var(--text-primary);
             border: none;
             padding: 8px 14px;
             border-radius: 40px;
@@ -200,67 +131,57 @@
             font-weight: bold;
         }
         .emergency-btn { background: #ff4d4d; color: white; width: 100%; }
+        footer {
+            font-size: 0.7rem;
+            text-align: center;
+            padding: 12px;
+            background: var(--bg-chat);
+            border-top: 1px solid var(--border-light);
+            color: #5F7F9C;
+        }
+        .typing-indicator .bubble { font-style: italic; opacity: 0.7; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @media (max-width: 560px) {
             .message { max-width: 95%; }
-            .chat { height: 95vh; }
             .plan-btn { padding: 6px 14px; font-size: 0.75rem; }
-            .chat-header h1 { font-size: 1.2rem; }
         }
     </style>
 </head>
 <body>
 <div class="chat">
     <div class="chat-header">
-        <h1>🏥 Vitalia – Asistente conversacional</h1>
-        <div style="display: flex; gap: 8px;">
-            <button id="darkModeToggle" class="theme-toggle">🌙 Modo oscuro</button>
-            <button id="shareGlobalBtn" class="share-btn-header">📤 Compartir</button>
-        </div>
+        <h1>🏥 Vitalia – Asistente de Salud con IA</h1>
+        <button id="darkModeToggle" class="theme-toggle">🌙 Modo oscuro</button>
     </div>
     <div class="messages" id="chatMessages">
-        <div class="message assistant">
-            <div class="bubble">👋 Hola, soy Vitalia. Cuéntame cómo te sientes y te ayudaré de forma conversacional. 😊</div>
-        </div>
+        <div class="message assistant"><div class="bubble">👋 Hola, soy Vitalia. Cuéntame tu síntoma principal.<br>🤖 Usaré inteligencia artificial (Groq) para sugerir la especialidad.</div></div>
     </div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="Escribe tu mensaje...">
+        <input type="text" id="userInput" placeholder="Escribe tu síntoma...">
         <button id="sendBtn">Enviar</button>
         <button id="resetBtn" class="reset-btn">↻ Nueva consulta</button>
     </div>
-    <footer>💰 Conversación con IA · Planes: Básico (40%), Estándar (25%), Premium (10%) · ⚠️ Siempre consulta a un médico</footer>
+    <footer>💰 Planes: Básico (pagas 40%), Estándar (25%), Premium (10%) · ⚠️ Solo informativo, no reemplaza consulta médica.</footer>
 </div>
 
 <script>
 // ========== MODO OSCURO ==========
-const darkModeToggle = document.getElementById('darkModeToggle');
-if (localStorage.getItem('darkMode') === 'enabled') {
-    document.body.classList.add('dark');
-    darkModeToggle.textContent = '☀️ Modo claro';
-}
-darkModeToggle.addEventListener('click', () => {
+const toggle = document.getElementById('darkModeToggle');
+if (localStorage.getItem('darkMode') === 'enabled') document.body.classList.add('dark');
+toggle.onclick = () => {
     document.body.classList.toggle('dark');
-    const isDark = document.body.classList.contains('dark');
-    localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
-    darkModeToggle.textContent = isDark ? '☀️ Modo claro' : '🌙 Modo oscuro';
-});
+    localStorage.setItem('darkMode', document.body.classList.contains('dark') ? 'enabled' : 'disabled');
+};
 
-// ========== ELEMENTOS DOM ==========
+// ========== DOM ==========
 const msgDiv = document.getElementById('chatMessages');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
 const resetBtn = document.getElementById('resetBtn');
 
-// ========== ESTADO DE LA CONVERSACIÓN ==========
-let conversationHistory = [];
-let patientData = {
-    symptom: null,
-    sex: null,
-    age: null,
-    duration: null,
-    city: null
-};
-let lastResults = null;
+// ========== ESTADO ==========
+let state = { step: "symptom", symptom: "", sex: null, age: null, duration: null, city: null, specialty: null };
+let typingDiv = null;
 
 // ========== FUNCIONES UI ==========
 function addMessage(role, text, isHtml = false) {
@@ -273,21 +194,88 @@ function addMessage(role, text, isHtml = false) {
     div.appendChild(bubble);
     msgDiv.appendChild(div);
     msgDiv.scrollTop = msgDiv.scrollHeight;
-    conversationHistory.push({ role, content: text });
 }
 
-let typingDiv = null;
 function showTyping() {
-    if (typingDiv) removeTyping();
+    if (typingDiv) typingDiv.remove();
     const div = document.createElement('div');
     div.className = 'message assistant typing-indicator';
-    div.innerHTML = `<div class="bubble">💬 Vitalia está escribiendo<span class="typing-dots"></span></div>`;
+    div.innerHTML = '<div class="bubble">💬 Vitalia está consultando la IA...</div>';
     msgDiv.appendChild(div);
     msgDiv.scrollTop = msgDiv.scrollHeight;
     typingDiv = div;
 }
 function removeTyping() {
     if (typingDiv) { typingDiv.remove(); typingDiv = null; }
+}
+
+// ========== LLAMADA AL WORKER (IA) ==========
+const WORKER_URL = 'https://vitalia-groq.dianaml76.workers.dev/api/suggest';
+
+async function getSpecialtyFromAI(symptom, sex, age) {
+    showTyping();
+    try {
+        const response = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ symptom, sex, age })
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        removeTyping();
+        if (data.specialty) return data.specialty;
+        throw new Error('Respuesta inválida');
+    } catch (error) {
+        removeTyping();
+        console.error('Error con Worker/Groq:', error);
+        // Fallback a lógica local si la IA falla
+        return suggestSpecialtyLocal(symptom, sex, age);
+    }
+}
+
+// ========== LÓGICA LOCAL DE ESPECIALIDAD (FALLBACK) ==========
+const specialities = [
+    { esp: "Neurología", kw: ["mareos", "vértigo", "debilidad pierna", "pesadez cabeza", "convulsiones", "desmayo", "dolor cabeza"], peso: 4 },
+    { esp: "Cardiología", kw: ["dolor pecho", "palpitaciones", "taquicardia", "presión alta"], peso: 4 },
+    { esp: "Traumatología", kw: ["fractura", "esguince", "rodilla", "hombro", "dolor espalda", "caída"], peso: 3 },
+    { esp: "Alergología", kw: ["ronchas", "camarones", "mariscos", "urticaria"], peso: 4 },
+    { esp: "Gastroenterología", kw: ["dolor abdominal", "reflujo", "diarrea"], peso: 2 },
+    { esp: "Medicina General", kw: ["fiebre", "cansancio", "fatiga"], peso: 1 }
+];
+function suggestSpecialtyLocal(symptom, sex, age) {
+    let lower = symptom.toLowerCase();
+    let best = { esp: "Medicina General", score: 0 };
+    for (let s of specialities) {
+        let score = 0;
+        for (let kw of s.kw) if (lower.includes(kw)) score += s.peso;
+        if (score > best.score) best = { esp: s.esp, score };
+    }
+    let esp = best.esp;
+    if (esp === "Gastroenterología" && lower.includes("dolor abdominal") && sex === "femenino") esp = "Ginecología";
+    if (lower.includes("testículos") || lower.includes("orinar")) esp = "Urología";
+    return esp;
+}
+
+// ========== URGENCIA ==========
+function urgencyLevel(symptom) {
+    let s = symptom.toLowerCase();
+    if (s.includes("dolor pecho") || s.includes("dificultad respiratoria") || s.includes("desmayo") || s.includes("convulsiones"))
+        return { level: "🔴 URGENTE", color: "#ff4d4d", msg: "Acude a emergencias inmediatamente." };
+    if (s.includes("mareos") || s.includes("fiebre") || s.includes("dolor cabeza"))
+        return { level: "🟡 PRIORIDAD MEDIA", color: "#ffcc00", msg: "Consulta en las próximas horas." };
+    return { level: "🟢 PRIORIDAD BAJA", color: "#28a745", msg: "Puede agendar consulta regular." };
+}
+
+// ========== DOCUMENTOS POR ESPECIALIDAD ==========
+function getDocuments(esp) {
+    const docs = {
+        "Cardiología": ["Cédula", "Carnet", "Electrocardiograma previo"],
+        "Neurología": ["Cédula", "Carnet", "Imágenes (RM/TC si tiene)"],
+        "Traumatología": ["Cédula", "Carnet", "Radiografías", "Informe de accidente"],
+        "Alergología": ["Cédula", "Carnet", "Descripción de reacciones alérgicas"],
+        "Medicina General": ["Cédula", "Carnet", "Lista de medicamentos actuales"]
+    };
+    return docs[esp] || ["Cédula", "Carnet"];
 }
 
 // ========== PLANES Y HOSPITALES ==========
@@ -297,11 +285,10 @@ const planes = {
     "Plan Premium": { c: 0.90, l: "Premium (pagas 10%)" }
 };
 const hosp = {
-    "Hospital Norte": { "Medicina General":45, "Neurología":60, "Odontología":40, "Otorrinolaringología":55, "Neumología":55, "Cardiología":60, "Gastroenterología":58, "Dermatología":55, "Psiquiatría":55, "Psicología":50, "Urología":55, "Ginecología":55, "Endocrinología":58, "Infectología":56, "Alergología":60, "Traumatología":60, "Reumatología":60, "Oftalmología":58, "Oncología":62 },
-    "Hospital Centro": { "Medicina General":40, "Neurología":55, "Odontología":35, "Otorrinolaringología":50, "Neumología":50, "Cardiología":55, "Gastroenterología":52, "Dermatología":50, "Psiquiatría":50, "Psicología":45, "Urología":50, "Ginecología":50, "Endocrinología":52, "Infectología":52, "Alergología":50, "Traumatología":55, "Reumatología":55, "Oftalmología":52, "Oncología":58 },
-    "Hospital Sur": { "Medicina General":42, "Neurología":58, "Odontología":38, "Otorrinolaringología":52, "Neumología":52, "Cardiología":58, "Gastroenterología":55, "Dermatología":52, "Psiquiatría":52, "Psicología":47, "Urología":52, "Ginecología":52, "Endocrinología":55, "Infectología":54, "Alergología":55, "Traumatología":58, "Reumatología":58, "Oftalmología":55, "Oncología":60 }
+    "Hospital Norte": { "Medicina General":45, "Neurología":60, "Traumatología":60, "Cardiología":60, "Alergología":60, "Ginecología":55, "Urología":55 },
+    "Hospital Centro": { "Medicina General":40, "Neurología":55, "Traumatología":55, "Cardiología":55, "Alergología":50, "Ginecología":50, "Urología":50 },
+    "Hospital Sur": { "Medicina General":42, "Neurología":58, "Traumatología":58, "Cardiología":58, "Alergología":55, "Ginecología":52, "Urología":52 }
 };
-
 function copago(cb, c) { return Math.round(cb * (1 - c)); }
 function ranking(esp, plan) {
     let p = planes[plan];
@@ -316,48 +303,66 @@ function ranking(esp, plan) {
     return { mejor: resultados[0], todos: resultados };
 }
 
-function showFinalResults(specialty, urgency, documentsList) {
-    const rank = ranking(specialty, "Plan Básico");
-    let bestHospital = "Hospital Centro";
-    if (rank && patientData.city) {
-        const cityMap = { norte: "Hospital Norte", centro: "Hospital Centro", sur: "Hospital Sur" };
-        bestHospital = cityMap[patientData.city.toLowerCase()] || rank.mejor.hospital;
-    } else if (rank) {
-        bestHospital = rank.mejor.hospital;
-    }
-    lastResults = { specialty, hospital: bestHospital, urgency, plan: null, copago: null };
+// ========== GEOLOCALIZACIÓN ==========
+function emergencyAction() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            pos => window.open(`https://www.google.com/maps/search/hospital+cercano/@${pos.coords.latitude},${pos.coords.longitude},15z`, '_blank'),
+            () => alert("No se pudo obtener tu ubicación. Llama al 911 o acude al hospital más cercano.")
+        );
+    } else alert("Tu navegador no soporta geolocalización. Llama al 911.");
+}
 
+// ========== COMPARTIR RESULTADO ==========
+function shareResult(specialty, hospital, copago, plan, urgency) {
+    const text = `🏥 *Vitalia - Resumen de tu consulta*\n\n🩺 Especialidad sugerida: ${specialty}\n🏨 Hospital más económico: ${hospital}\n💰 Copago estimado: $${copago} USD (${plan})\n🚦 Nivel de urgencia: ${urgency}\n\n⚠️ Este es un consejo informativo, no reemplaza una evaluación médica presencial.`;
+    navigator.clipboard.writeText(text).then(() => alert("✅ Resumen copiado al portapapeles."));
+}
+
+// ========== FLUJO PRINCIPAL (PREGUNTAS FIJAS) ==========
+function askSex() { addMessage("assistant", "📌 ¿Sexo biológico? (masculino / femenino)"); state.step = "asking_sex"; }
+function askAge() { addMessage("assistant", "📌 ¿Edad? (número)"); state.step = "asking_age"; }
+function askDuration() { addMessage("assistant", "⏳ ¿Cuántos días lleva con el síntoma?"); state.step = "asking_duration"; }
+function askCity() { addMessage("assistant", "📍 ¿En qué ciudad estás? (Norte, Centro, Sur)"); state.step = "asking_city"; }
+
+async function showFinalResults() {
+    const urgency = urgencyLevel(state.symptom);
+    const docs = getDocuments(state.specialty);
+    addMessage("assistant", `🧠 Vitalia (IA) sugiere consultar con <strong>${state.specialty}</strong>.`, true);
+    addMessage("assistant", `📋 <strong>Documentos recomendados para tu consulta:</strong><br>${docs.map(d => `• ${d}`).join('<br>')}`, true);
+    addMessage("assistant", `<div style="padding:12px; border-radius:12px; background:${urgency.color}; color:white;">🚦 ${urgency.level}<br>${urgency.msg}</div>`, true);
+    
     const container = document.createElement("div");
     container.className = "plan-buttons";
     for (let [nombre, info] of Object.entries(planes)) {
         const btn = document.createElement("button");
         btn.innerText = info.l;
         btn.className = "plan-btn";
-        btn.onclick = async () => {
-            const rank2 = ranking(specialty, nombre);
-            if (!rank2) { addMessage("assistant", "No hay datos para esa especialidad."); return; }
-            const mejor = rank2.mejor;
-            const urgencyObj = { level: urgency, color: "#28a745", msg: "" };
-            if (urgency.includes("URGENTE")) urgencyObj.color = "#ff4d4d";
-            else if (urgency.includes("MEDIA")) urgencyObj.color = "#ffcc00";
+        btn.onclick = () => {
+            const rank = ranking(state.specialty, nombre);
+            if (!rank) { addMessage("assistant", "No hay datos para esa especialidad."); return; }
+            let mejor = rank.mejor;
+            let cityMap = { norte: "Hospital Norte", centro: "Hospital Centro", sur: "Hospital Sur" };
+            if (state.city && cityMap[state.city.toLowerCase()]) {
+                let preferred = cityMap[state.city.toLowerCase()];
+                if (rank.todos.find(h => h.hospital === preferred)) mejor = rank.todos.find(h => h.hospital === preferred);
+            }
             let html = `<strong>✅ ${nombre}</strong> (cubre ${planes[nombre].c*100}%)<br><br>`;
             html += `🏥 <strong>Más económico y cercano:</strong> ${mejor.hospital}<br>`;
             html += `💰 <strong>Tu copago:</strong> $${mejor.copago}<br>`;
             html += `📋 Costo base: $${mejor.costoBase}<br><br>`;
             html += `<strong>Comparativa red:</strong><br>`;
-            rank2.todos.forEach(h => { html += `• ${h.hospital}: copago $${h.copago} (base $${h.costoBase})<br>`; });
-            html += `<br><div style="padding:12px; border-radius:12px; background:${urgencyObj.color}; color:white; font-weight:bold;">🚦 ${urgency}<br><span style="font-weight:normal">${urgencyObj.msg}</span></div>`;
-            if (urgency.includes("URGENTE")) {
+            rank.todos.forEach(h => { html += `• ${h.hospital}: copago $${h.copago} (base $${h.costoBase})<br>`; });
+            html += `<br><button id="shareBtnFinal" class="share-btn">📤 Compartir este resultado</button>`;
+            if (urgency.level.includes("URGENTE")) {
                 html += `<br><button id="emergencyBtnFinal" class="emergency-btn">🚨 Llamar a emergencias / Buscar hospital cercano</button>`;
             }
-            html += `<br><button id="shareResultBtnFinal" class="share-btn">📤 Compartir este resultado</button>`;
             addMessage("assistant", html, true);
-            lastResults = { specialty, hospital: mejor.hospital, urgency, plan: nombre, copago: mejor.copago };
             setTimeout(() => {
+                const share = document.getElementById("shareBtnFinal");
+                if (share) share.onclick = () => shareResult(state.specialty, mejor.hospital, mejor.copago, nombre, urgency.level);
                 const emerg = document.getElementById("emergencyBtnFinal");
                 if (emerg) emerg.onclick = () => emergencyAction();
-                const share = document.getElementById("shareResultBtnFinal");
-                if (share) share.onclick = () => shareResult();
             }, 100);
         };
         container.appendChild(btn);
@@ -371,101 +376,51 @@ function showFinalResults(specialty, urgency, documentsList) {
     wrapper.appendChild(bubble);
     msgDiv.appendChild(wrapper);
     msgDiv.scrollTop = msgDiv.scrollHeight;
-
-    if (documentsList && documentsList.length) {
-        addMessage("assistant", `📋 <strong>Documentos recomendados para tu consulta con ${specialty}:</strong><br>${documentsList.map(d => `• ${d}`).join('<br>')}`, true);
-    }
+    state.step = "finished";
 }
 
-function emergencyAction() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            pos => window.open(`https://www.google.com/maps/search/hospital+cercano/@${pos.coords.latitude},${pos.coords.longitude},15z`, '_blank'),
-            () => alert("No se pudo obtener ubicación. Llama al 911.")
-        );
-    } else alert("Tu navegador no soporta geolocalización. Llama al 911.");
-}
-
-function shareResult() {
-    if (!lastResults) return;
-    const text = `🏥 *Vitalia - Resumen*\n\n🩺 Especialidad: ${lastResults.specialty}\n🏨 Hospital: ${lastResults.hospital}\n💰 Copago: $${lastResults.copago} (${lastResults.plan})\n🚦 Urgencia: ${lastResults.urgency}\n\n⚠️ Solo informativo, no reemplaza consulta médica.`;
-    navigator.clipboard.writeText(text).then(() => alert("✅ Resumen copiado al portapapeles."));
-}
-
-// ========== COMUNICACIÓN CON EL WORKER ==========
-const WORKER_URL = 'https://vitalia-groq.dianaml76.workers.dev/api/suggest';
-
-async function sendToVitalia(userMessage) {
-    showTyping();
-    try {
-        const response = await fetch(WORKER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                messages: conversationHistory,
-                symptom: patientData.symptom,
-                sex: patientData.sex,
-                age: patientData.age,
-                duration: patientData.duration,
-                city: patientData.city
-            })
-        });
-        const data = await response.json();
-        removeTyping();
-        if (data.error) {
-            addMessage("assistant", "⚠️ Lo siento, Vitalia no puede responder ahora. Por favor, intenta de nuevo más tarde.");
-            return;
-        }
-        addMessage("assistant", data.message);
-        if (data.next_action === "show_results" && data.specialty) {
-            showFinalResults(data.specialty, data.urgency, data.documents);
-        }
-    } catch (err) {
-        removeTyping();
-        addMessage("assistant", "⚠️ Error de conexión con Vitalia. Intenta de nuevo más tarde.");
-        console.error(err);
-    }
-}
-
-// ========== PROCESAR ENTRADA DEL USUARIO ==========
-async function processUserInput(text) {
-    if (!text.trim()) return;
+async function processInput(raw) {
+    let text = raw.trim();
+    if (!text) return;
     addMessage("user", text);
-    const lower = text.toLowerCase();
-    if (!patientData.symptom) patientData.symptom = text;
-    if (lower.includes("masculino") || lower.includes("hombre") || lower.includes("varón")) patientData.sex = "masculino";
-    if (lower.includes("femenino") || lower.includes("mujer")) patientData.sex = "femenino";
-    const ageMatch = text.match(/\b(\d{1,3})\s*(años|años?|año|edades?)\b/i);
-    if (ageMatch) patientData.age = parseInt(ageMatch[1]);
-    const daysMatch = text.match(/\b(\d+)\s*(días|dias|día)\b/i);
-    if (daysMatch) patientData.duration = parseInt(daysMatch[1]);
-    const cityNames = ["norte", "centro", "sur"];
-    for (let c of cityNames) if (lower.includes(c)) patientData.city = c;
-
-    await sendToVitalia(text);
+    
+    if (state.step === "symptom") {
+        state.symptom = text;
+        askSex();
+    } else if (state.step === "asking_sex") {
+        let lower = text.toLowerCase();
+        if (lower === "masculino" || lower === "femenino") { state.sex = lower; askAge(); }
+        else addMessage("assistant", "Escribe 'masculino' o 'femenino'.");
+    } else if (state.step === "asking_age") {
+        let a = parseInt(text);
+        if (!isNaN(a) && a > 0 && a < 120) { state.age = a; askDuration(); }
+        else addMessage("assistant", "Edad inválida (1-120).");
+    } else if (state.step === "asking_duration") {
+        let d = parseInt(text);
+        if (!isNaN(d) && d >= 0 && d < 365) { state.duration = d; askCity(); }
+        else addMessage("assistant", "Número de días inválido.");
+    } else if (state.step === "asking_city") {
+        let cityLower = text.toLowerCase();
+        if (cityLower === "norte" || cityLower === "centro" || cityLower === "sur") state.city = cityLower;
+        else state.city = "centro";
+        // Llamar a la IA para obtener la especialidad
+        let specialty = await getSpecialtyFromAI(state.symptom, state.sex, state.age);
+        state.specialty = specialty;
+        await showFinalResults();
+    } else if (state.step === "finished") {
+        addMessage("assistant", "Presiona 'Nueva consulta' para iniciar otra.");
+    }
 }
 
-// ========== REINICIAR ==========
 function resetChat() {
-    conversationHistory = [];
-    patientData = { symptom: null, sex: null, age: null, duration: null, city: null };
-    lastResults = null;
+    state = { step: "symptom", symptom: "", sex: null, age: null, duration: null, city: null, specialty: null };
     while (msgDiv.children.length > 1) msgDiv.removeChild(msgDiv.lastChild);
-    addMessage("assistant", "🔄 Conversación reiniciada. Cuéntame cómo te sientes.");
+    addMessage("assistant", "🔄 Conversación reiniciada. Cuéntame tu síntoma principal.");
 }
 
-// ========== EVENTOS ==========
-sendBtn.onclick = () => {
-    const text = userInput.value.trim();
-    if (text) processUserInput(text);
-    userInput.value = "";
-};
+sendBtn.onclick = () => { let v = userInput.value.trim(); if (v) processInput(v); userInput.value = ""; };
 resetBtn.onclick = () => resetChat();
 userInput.addEventListener("keypress", e => { if (e.key === "Enter") sendBtn.click(); });
-document.getElementById("shareGlobalBtn").onclick = () => {
-    if (lastResults) shareResult();
-    else alert("Aún no hay resultados para compartir. Completa una consulta primero.");
-};
 userInput.focus();
 </script>
 </body>
