@@ -1,576 +1,82 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Vitalia – Asistente de Salud con IA</title>
-    <style>
-        :root {
-            --primary-blue: #2A6F9E; --primary-dark: #1E5A7F; --secondary-green: #2E9F7A;
-            --bg-body: #F7F9FB; --bg-chat: #FFFFFF; --text-primary: #0F1724;
-            --border-light: #E2E8F0; --accent-soft: #A9D6E5;
-        }
-        body.dark {
-            --bg-body: #121826; --bg-chat: #1A202C; --text-primary: #EDF2F7;
-            --border-light: #2D3748; --accent-soft: #2B5C74;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: var(--bg-body);
-            font-family: system-ui, 'Segoe UI', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .chat {
-            max-width: 880px;
-            width: 100%;
-            background: var(--bg-chat);
-            border-radius: 40px;
-            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.35);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 85vh;
-            max-height: 820px;
-        }
-        .chat-header {
-            background: linear-gradient(135deg, #1E5A7F, #2A6F9E);
-            color: white;
-            padding: 22px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .chat-header h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
-        .theme-toggle {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            border-radius: 40px;
-            padding: 8px 16px;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            background: var(--bg-chat);
-        }
-        .message { display: flex; max-width: 85%; animation: fadeInUp 0.2s ease; }
-        .message.user { align-self: flex-end; }
-        .message.assistant { align-self: flex-start; }
-        .bubble {
-            padding: 12px 18px;
-            border-radius: 28px;
-            line-height: 1.45;
-            font-size: 0.95rem;
-            background: var(--bg-chat);
-            border: 1px solid var(--border-light);
-            color: var(--text-primary);
-        }
-        .user .bubble {
-            background: #2A6F9E;
-            color: white;
-            border: none;
-        }
-        .input-area {
-            padding: 16px 20px 22px;
-            background: var(--bg-chat);
-            border-top: 1px solid var(--border-light);
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .input-area input {
-            flex: 1;
-            padding: 14px 20px;
-            border: 1px solid var(--border-light);
-            border-radius: 60px;
-            font-size: 1rem;
-            background: var(--bg-chat);
-            color: var(--text-primary);
-        }
-        .input-area button {
-            background: #2A6F9E;
-            border: none;
-            padding: 0 28px;
-            border-radius: 60px;
-            font-weight: 600;
-            color: white;
-            cursor: pointer;
-        }
-        .input-area .reset-btn {
-            background: #e9ecef;
-            color: #2A6F9E;
-        }
-        .plan-buttons { display: flex; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
-        .plan-btn {
-            background: #ecf3f8;
-            border: none;
-            padding: 10px 22px;
-            border-radius: 60px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            color: #2A6F9E;
-        }
-        .share-btn, .emergency-btn {
-            background: var(--accent-soft);
-            border: none;
-            padding: 8px 14px;
-            border-radius: 40px;
-            cursor: pointer;
-            margin-top: 8px;
-            font-weight: bold;
-        }
-        .emergency-btn { background: #ff4d4d; color: white; width: 100%; }
-        footer {
-            font-size: 0.7rem;
-            text-align: center;
-            padding: 12px;
-            background: var(--bg-chat);
-            border-top: 1px solid var(--border-light);
-            color: #5F7F9C;
-        }
-        .typing-indicator .bubble { font-style: italic; opacity: 0.7; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 560px) {
-            .message { max-width: 95%; }
-            .plan-btn { padding: 6px 14px; font-size: 0.75rem; }
-        }
-    </style>
-</head>
-<body>
-<div class="chat">
-    <div class="chat-header">
-        <h1>🏥 Vitalia – Asistente de Salud con IA</h1>
-        <button id="darkModeToggle" class="theme-toggle">🌙 Modo oscuro</button>
-    </div>
-    <div class="messages" id="chatMessages">
-        <div class="message assistant"><div class="bubble">👋 Hola, soy Vitalia. Cuéntame tu síntoma principal.<br>🤖 Usaré inteligencia artificial (Groq) para sugerir la especialidad.</div></div>
-    </div>
-    <div class="input-area">
-        <input type="text" id="userInput" placeholder="Escribe tu mensaje...">
-        <button id="sendBtn">Enviar</button>
-        <button id="resetBtn" class="reset-btn">↻ Nueva consulta</button>
-    </div>
-    <footer>💰 Planes: Básico (pagas 40%), Estándar (25%), Premium (10%) · ⚠️ Solo informativo, no reemplaza consulta médica.</footer>
-</div>
-
-<script>
-// ========== MODO OSCURO ==========
-const toggle = document.getElementById('darkModeToggle');
-if (localStorage.getItem('darkMode') === 'enabled') document.body.classList.add('dark');
-toggle.onclick = () => {
-    document.body.classList.toggle('dark');
-    localStorage.setItem('darkMode', document.body.classList.contains('dark') ? 'enabled' : 'disabled');
-};
-
-// ========== DOM ==========
-const msgDiv = document.getElementById('chatMessages');
-const userInput = document.getElementById('userInput');
-const sendBtn = document.getElementById('sendBtn');
-const resetBtn = document.getElementById('resetBtn');
-
-// ========== ESTADO ==========
-let state = { step: "symptom", symptom: "", sex: null, age: null, duration: null, city: null, specialty: null };
-let typingDiv = null;
-let typingTimeout = null;
-let conversationHistory = []; // Historial para enviar a la IA
-
-// ========== FUNCIONES UI ==========
-function addMessage(role, text, isHtml = false) {
-    const div = document.createElement('div');
-    div.className = `message ${role}`;
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    if (isHtml) bubble.innerHTML = text;
-    else bubble.innerText = text;
-    div.appendChild(bubble);
-    msgDiv.appendChild(div);
-    msgDiv.scrollTop = msgDiv.scrollHeight;
-}
-
-function showTyping() {
-    if (typingDiv) removeTyping();
-    const div = document.createElement('div');
-    div.className = 'message assistant typing-indicator';
-    div.innerHTML = '<div class="bubble">💬 Vitalia está escribiendo<span class="typing-dots">...</span></div>';
-    msgDiv.appendChild(div);
-    msgDiv.scrollTop = msgDiv.scrollHeight;
-    typingDiv = div;
-}
-function removeTyping() {
-    if (typingDiv) { typingDiv.remove(); typingDiv = null; }
-    if (typingTimeout) clearTimeout(typingTimeout);
-}
-
-function replyWithTyping(text, isHtml = false, delay = 400) {
-    showTyping();
-    typingTimeout = setTimeout(() => {
-        removeTyping();
-        addMessage("assistant", text, isHtml);
-    }, delay);
-}
-
-function replyImmediately(text, isHtml = false) {
-    removeTyping();
-    addMessage("assistant", text, isHtml);
-}
-
-// ========== LLAMADA AL WORKER (IA) ==========
-// CORREGIDO: Ahora apunta a /api/chat (la ruta que existe en worker.js)
-const WORKER_URL = 'https://vitalia-groq.dianaml76.workers.dev/api/chat';
-
-async function getSpecialtyFromAI(symptom, sex, age, duration, city) {
-    showTyping();
-    try {
-        const response = await fetch(WORKER_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                messages: conversationHistory, // Enviamos el historial
-                symptom, sex, age, duration, city 
-            })
-        });
-        
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        
-        const data = await response.json();
-        removeTyping();
-        
-        // MEJORA: Si la IA devuelve un error, lo notificamos y usamos fallback
-        if (data.error) {
-            console.warn('La IA devolvió un error:', data.error);
-            replyImmediately("⚠️ La IA no está disponible en este momento. Usaré mi lógica local para ayudarte.");
-            return { 
-                specialty: suggestSpecialtyLocal(symptom, sex, age), 
-                urgency: urgencyLevel(symptom),
-                documents: getDocuments(suggestSpecialtyLocal(symptom, sex, age))
-            };
-        }
-        
-        let specialty = data.specialty || "Medicina General";
-        
-        // MEJORA: Informar si se sobrescribe por edad
-        if (age < 13 && specialty !== "Pediatría" && specialty !== "Neonatología") {
-            specialty = "Pediatría";
-            replyImmediately("ℹ️ Por tu edad (menor de 13 años), te derivamos a Pediatría.");
-        }
-        
-        // MEJORA: Usar urgency y documents de la IA si vienen, si no, fallback
-        const urgency = data.urgency ? { level: data.urgency, color: getUrgencyColor(data.urgency), msg: getUrgencyMessage(data.urgency) } : urgencyLevel(symptom);
-        const documents = data.documents || getDocuments(specialty);
-        
-        return { specialty, urgency, documents };
-        
-    } catch (error) {
-        removeTyping();
-        console.error('Error con Worker/Groq:', error);
-        replyImmediately("⚠️ No pude conectar con la IA. Usaré mi lógica local para ayudarte.");
-        const localSpecialty = suggestSpecialtyLocal(symptom, sex, age);
-        return { 
-            specialty: localSpecialty, 
-            urgency: urgencyLevel(symptom),
-            documents: getDocuments(localSpecialty)
-        };
-    }
-}
-
-// Helper para color de urgencia
-function getUrgencyColor(level) {
-    if (level.includes("URGENTE")) return "#ff4d4d";
-    if (level.includes("MEDIA")) return "#ffcc00";
-    return "#28a745";
-}
-function getUrgencyMessage(level) {
-    if (level.includes("URGENTE")) return "Acude a emergencias inmediatamente.";
-    if (level.includes("MEDIA")) return "Consulta en las próximas horas.";
-    return "Puede agendar consulta regular.";
-}
-
-// ========== LÓGICA LOCAL (FALLBACK) ==========
-const specialities = [
-    { esp: "Neurología", kw: ["mareos", "vértigo", "debilidad pierna", "pesadez cabeza", "convulsiones", "desmayo", "dolor cabeza"], peso: 4 },
-    { esp: "Cardiología", kw: ["dolor pecho", "palpitaciones", "taquicardia", "presión alta"], peso: 4 },
-    { esp: "Traumatología", kw: ["fractura", "esguince", "rodilla", "hombro", "dolor espalda", "caída"], peso: 3 },
-    { esp: "Alergología", kw: ["ronchas", "camarones", "mariscos", "urticaria"], peso: 4 },
-    { esp: "Nefrología", kw: ["riñón", "insuficiencia renal", "diálisis", "piedras en el riñón", "cálculos renales", "creatinina alta"], peso: 3 },
-    { esp: "Hematología", kw: ["anemia", "sangrado fácil", "moretones sin causa", "leucemia", "coágulos", "trombosis"], peso: 3 },
-    { esp: "Geriatría", kw: ["adulto mayor", "anciano", "caídas frecuentes", "problemas de memoria", "debilidad general", "polifarmacia"], peso: 3 },
-    { esp: "Pediatría", kw: ["niño", "bebé", "pediátrico", "vacunas", "fiebre en niño", "dolor de estómago en niño"], peso: 3 },
-    { esp: "Gastroenterología", kw: ["dolor abdominal", "reflujo", "diarrea"], peso: 2 },
-    { esp: "Medicina General", kw: ["fiebre", "cansancio", "fatiga"], peso: 1 }
-];
-function suggestSpecialtyLocal(symptom, sex, age) {
-    if (age < 13) return "Pediatría";
-    let lower = symptom.toLowerCase();
-    let best = { esp: "Medicina General", score: 0 };
-    for (let s of specialities) {
-        let score = 0;
-        for (let kw of s.kw) if (lower.includes(kw)) score += s.peso;
-        if (score > best.score) best = { esp: s.esp, score };
-    }
-    let esp = best.esp;
-    if (esp === "Gastroenterología" && lower.includes("dolor abdominal") && sex === "femenino") esp = "Ginecología";
-    if (lower.includes("testículos") || lower.includes("orinar")) esp = "Urología";
-    if (lower.includes("riñón") || lower.includes("creatinina")) esp = "Nefrología";
-    if (lower.includes("anemia") || lower.includes("sangrado")) esp = "Hematología";
-    if (lower.includes("adulto mayor") || lower.includes("anciano")) esp = "Geriatría";
-    if (lower.includes("niño") || lower.includes("bebé")) esp = "Pediatría";
-    return esp;
-}
-
-// ========== URGENCIA ==========
-function urgencyLevel(symptom) {
-    let s = symptom.toLowerCase();
-    if (s.includes("dolor pecho") || s.includes("dificultad respiratoria") || s.includes("desmayo") || s.includes("convulsiones") || s.includes("sangrado abundante"))
-        return { level: "🔴 URGENTE", color: "#ff4d4d", msg: "Acude a emergencias inmediatamente." };
-    if (s.includes("mareos") || s.includes("fiebre") || s.includes("dolor cabeza") || s.includes("vómito"))
-        return { level: "🟡 PRIORIDAD MEDIA", color: "#ffcc00", msg: "Consulta en las próximas horas." };
-    return { level: "🟢 PRIORIDAD BAJA", color: "#28a745", msg: "Puede agendar consulta regular." };
-}
-
-// ========== DOCUMENTOS ==========
-function getDocuments(esp) {
-    const docs = {
-        "Cardiología": ["Cédula", "Carnet", "Electrocardiograma previo"],
-        "Neurología": ["Cédula", "Carnet", "Imágenes (RM/TC si tiene)"],
-        "Traumatología": ["Cédula", "Carnet", "Radiografías", "Informe de accidente"],
-        "Alergología": ["Cédula", "Carnet", "Descripción de reacciones alérgicas"],
-        "Nefrología": ["Cédula", "Carnet", "Análisis de sangre (creatinina, urea)", "Ecografía renal"],
-        "Hematología": ["Cédula", "Carnet", "Hemograma completo", "Estudios de coagulación"],
-        "Geriatría": ["Cédula", "Carnet", "Lista completa de medicamentos", "Informe de caídas"],
-        "Pediatría": ["Cédula del niño", "Carnet del seguro", "Cartilla de vacunación", "Historial de crecimiento"],
-        "Medicina General": ["Cédula", "Carnet", "Lista de medicamentos actuales"]
+export default {
+  async fetch(request, env, ctx) {
+    // ========== CORS ==========
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*", // En producción puedes restringir a tu dominio
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
     };
-    return docs[esp] || ["Cédula", "Carnet"];
-}
 
-// ========== PLANES Y HOSPITALES ==========
-const planes = {
-    "Plan Básico": { c: 0.60, l: "Básico (pagas 40%)" },
-    "Plan Estándar": { c: 0.75, l: "Estándar (pagas 25%)" },
-    "Plan Premium": { c: 0.90, l: "Premium (pagas 10%)" }
-};
-const hosp = {
-    "Hospital Norte": {
-        "Medicina General":45, "Neurología":60, "Traumatología":60, "Cardiología":60,
-        "Alergología":60, "Ginecología":55, "Urología":55, "Nefrología":58,
-        "Hematología":62, "Geriatría":55, "Pediatría":50
-    },
-    "Hospital Centro": {
-        "Medicina General":40, "Neurología":55, "Traumatología":55, "Cardiología":55,
-        "Alergología":50, "Ginecología":50, "Urología":50, "Nefrología":52,
-        "Hematología":56, "Geriatría":50, "Pediatría":45
-    },
-    "Hospital Sur": {
-        "Medicina General":42, "Neurología":58, "Traumatología":58, "Cardiología":58,
-        "Alergología":55, "Ginecología":52, "Urología":52, "Nefrología":55,
-        "Hematología":58, "Geriatría":52, "Pediatría":47
+    // Preflight
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders });
     }
-};
-function copago(cb, c) { return Math.round(cb * (1 - c)); }
-function ranking(esp, plan) {
-    let p = planes[plan];
-    if (!p) return null;
-    let resultados = [];
-    for (let [h, cs] of Object.entries(hosp)) {
-        let cb = cs[esp];
-        if (cb) resultados.push({ hospital: h, costoBase: cb, copago: copago(cb, p.c) });
-    }
-    if (!resultados.length) return null;
-    resultados.sort((a, b) => a.copago - b.copago);
-    return { mejor: resultados[0], todos: resultados };
-}
 
-// ========== GEOLOCALIZACIÓN Y COMPARTIR ==========
-function emergencyAction() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            pos => window.open(`https://www.google.com/maps/search/hospital+cercano/@${pos.coords.latitude},${pos.coords.longitude},15z`, '_blank'),
-            () => alert("No se pudo obtener tu ubicación. Llama al 911 o acude al hospital más cercano.")
+    // Solo POST
+    if (request.method !== "POST") {
+      return new Response(
+        JSON.stringify({ error: "Método no permitido. Usa POST." }),
+        { status: 405, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Ruta válida
+    const url = new URL(request.url);
+    if (url.pathname !== "/api/chat") {
+      return new Response(
+        JSON.stringify({ error: "Ruta no encontrada. Usa /api/chat" }),
+        { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    try {
+      // ========== LEER DATOS ==========
+      const body = await request.json();
+      const {
+        messages = [],
+        symptom = null,
+        sex = null,
+        age = null,
+        duration = null,
+        city = null
+      } = body;
+
+      if (!symptom) {
+        return new Response(
+          JSON.stringify({ error: "Falta el campo 'symptom' en la petición." }),
+          { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
         );
-    } else alert("Tu navegador no soporta geolocalización. Llama al 911.");
-}
-function shareResult(specialty, hospital, copago, plan, urgency) {
-    const text = `🏥 *Vitalia - Resumen de tu consulta*\n\n🩺 Especialidad sugerida: ${specialty}\n🏨 Hospital más económico: ${hospital}\n💰 Copago estimado: $${copago} USD (${plan})\n🚦 Nivel de urgencia: ${urgency}\n\n⚠️ Este es un consejo informativo, no reemplaza una evaluación médica presencial.`;
-    navigator.clipboard.writeText(text).then(() => alert("✅ Resumen copiado al portapapeles."));
-}
+      }
 
-// ========== PREGUNTAS CON EFECTO "ESCRIBIENDO..." ==========
-function askSex() { replyWithTyping("📌 ¿Sexo biológico? (masculino / femenino)"); state.step = "asking_sex"; }
-function askAge() { replyWithTyping("📌 ¿Edad? (número)"); state.step = "asking_age"; }
-function askDuration() { replyWithTyping("⏳ ¿Cuántos días lleva con el síntoma?"); state.step = "asking_duration"; }
-function askCity() { replyWithTyping("📍 ¿En qué ciudad de Ecuador estás? (Quito, Guayaquil, Cuenca)"); state.step = "asking_city"; }
+      // ========== PROMPT ==========
+      const systemPrompt = `Eres Vitalia, un asistente médico experto. El paciente ya ha proporcionado TODA la información necesaria. Tu única tarea es analizar los datos y devolver un JSON con la especialidad médica más probable, el nivel de urgencia y los documentos recomendados.
 
-// ========== MOSTRAR RESULTADOS FINALES ==========
-async function showFinalResults(aiResult) {
-    // aiResult contiene { specialty, urgency, documents }
-    const { specialty, urgency, documents } = aiResult;
-    
-    replyWithTyping(`🧠 Vitalia (IA) sugiere consultar con <strong>${specialty}</strong>.`, true);
-    
-    setTimeout(() => {
-        replyWithTyping(`📋 <strong>Documentos recomendados para tu consulta:</strong><br>${documents.map(d => `• ${d}`).join('<br>')}`, true);
-        
-        setTimeout(() => {
-            replyWithTyping(`<div style="padding:12px; border-radius:12px; background:${urgency.color}; color:white;">🚦 ${urgency.level}<br>${urgency.msg}</div>`, true);
-            
-            setTimeout(() => {
-                // Botones de planes
-                const container = document.createElement("div");
-                container.className = "plan-buttons";
-                for (let [nombre, info] of Object.entries(planes)) {
-                    const btn = document.createElement("button");
-                    btn.innerText = info.l;
-                    btn.className = "plan-btn";
-                    btn.onclick = () => {
-                        const rank = ranking(specialty, nombre);
-                        if (!rank) { replyImmediately("No hay datos para esa especialidad."); return; }
-                        let mejor = rank.mejor;
-                        let cityMap = { quito: "Hospital Norte", guayaquil: "Hospital Centro", cuenca: "Hospital Sur" };
-                        if (state.city && cityMap[state.city.toLowerCase()]) {
-                            let preferred = cityMap[state.city.toLowerCase()];
-                            if (rank.todos.find(h => h.hospital === preferred)) mejor = rank.todos.find(h => h.hospital === preferred);
-                        }
-                        let html = `<strong>✅ ${nombre}</strong> (cubre ${planes[nombre].c*100}%)<br><br>`;
-                        html += `🏥 <strong>Más económico y cercano:</strong> ${mejor.hospital}<br>`;
-                        html += `💰 <strong>Tu copago:</strong> $${mejor.copago}<br>`;
-                        html += `📋 Costo base: $${mejor.costoBase}<br><br>`;
-                        html += `<strong>Comparativa red:</strong><br>`;
-                        rank.todos.forEach(h => { html += `• ${h.hospital}: copago $${h.copago} (base $${h.costoBase})<br>`; });
-                        html += `<br><button id="shareBtnFinal" class="share-btn">📤 Compartir este resultado</button>`;
-                        // MEJORA: Botón de emergencia SIEMPRE visible (no solo si es urgente)
-                        html += `<br><button id="emergencyBtnFinal" class="emergency-btn">🚨 Llamar a emergencias / Buscar hospital cercano</button>`;
-                        addMessage("assistant", html, true);
-                        setTimeout(() => {
-                            const share = document.getElementById("shareBtnFinal");
-                            if (share) share.onclick = () => shareResult(specialty, mejor.hospital, mejor.copago, nombre, urgency.level);
-                            const emerg = document.getElementById("emergencyBtnFinal");
-                            if (emerg) emerg.onclick = () => emergencyAction();
-                        }, 100);
-                    };
-                    container.appendChild(btn);
-                }
-                const wrapper = document.createElement("div");
-                wrapper.className = "message assistant";
-                const bubble = document.createElement("div");
-                bubble.className = "bubble";
-                bubble.appendChild(document.createTextNode("Elige tu plan de seguro para ver el copago exacto:"));
-                bubble.appendChild(container);
-                wrapper.appendChild(bubble);
-                msgDiv.appendChild(wrapper);
-                msgDiv.scrollTop = msgDiv.scrollHeight;
-                state.step = "finished";
-            }, 500);
-        }, 500);
-    }, 500);
-}
+DATOS DEL PACIENTE:
+- Síntoma principal: ${symptom}
+- Sexo biológico: ${sex || "no proporcionado"}
+- Edad: ${age || "no proporcionado"} años
+- Duración de los síntomas: ${duration !== null ? duration + " días" : "no proporcionado"}
+- Ciudad: ${city || "no proporcionado"}
 
-// ========== RECONOCIMIENTO DE SALUDOS ==========
-function isGreeting(text) {
-    const greetings = ["hola", "buenos días", "buenas tardes", "buenas noches", "hey", "saludos", "qué tal", "buen día", "buenas", "buen dia"];
-    return greetings.some(g => text.toLowerCase().includes(g));
-}
+HISTORIAL DE CONVERSACIÓN (contexto adicional):
+${messages.length > 0 ? messages.slice(-6).map(m => `${m.role}: ${m.content}`).join('\n') : "Sin historial previo."}
 
-// ========== PROCESAR ENTRADA DEL USUARIO ==========
-async function processInput(raw) {
-    let text = raw.trim();
-    if (!text) return;
-    addMessage("user", text);
-    
-    // Guardar en historial para la IA
-    conversationHistory.push({ role: "user", content: text });
-    
-    // Comandos de reinicio
-    if (text.toLowerCase() === "nuevo" || text.toLowerCase() === "reiniciar") {
-        resetChat();
-        return;
-    }
-    
-    // Manejo de saludos
-    if (isGreeting(text)) {
-        let greetingResponse = "¡Hola! 😊 ";
-        if (state.step === "symptom") greetingResponse += "Cuéntame, ¿cuál es tu síntoma principal?";
-        else if (state.step === "asking_sex") greetingResponse += "¿Podrías indicarme tu sexo? (masculino / femenino)";
-        else if (state.step === "asking_age") greetingResponse += "¿Cuál es tu edad?";
-        else if (state.step === "asking_duration") greetingResponse += "¿Cuántos días llevas con el síntoma?";
-        else if (state.step === "asking_city") greetingResponse += "¿En qué ciudad de Ecuador te encuentras? (Quito, Guayaquil, Cuenca)";
-        else if (state.step === "finished") greetingResponse += "Si deseas iniciar una nueva consulta, escribe 'nuevo' o presiona el botón 'Nueva consulta'.";
-        else greetingResponse += "¿En qué puedo ayudarte?";
-        replyWithTyping(greetingResponse);
-        conversationHistory.push({ role: "assistant", content: greetingResponse });
-        return;
-    }
-    
-    // Flujo normal
-    if (state.step === "symptom") {
-        state.symptom = text;
-        askSex();
-    } else if (state.step === "asking_sex") {
-        let lower = text.toLowerCase();
-        if (lower === "masculino" || lower === "femenino") {
-            state.sex = lower;
-            askAge();
-        } else {
-            replyWithTyping("Escribe 'masculino' o 'femenino'. 😊");
-        }
-    } else if (state.step === "asking_age") {
-        let a = parseInt(text);
-        if (!isNaN(a) && a > 0 && a < 120) {
-            state.age = a;
-            askDuration();
-        } else {
-            replyWithTyping("Edad inválida. Por favor, escribe un número entre 1 y 120.");
-        }
-    } else if (state.step === "asking_duration") {
-        let d = parseInt(text);
-        if (!isNaN(d) && d >= 0 && d < 365) {
-            state.duration = d;
-            askCity();
-        } else {
-            replyWithTyping("Número de días inválido (0-364).");
-        }
-    } else if (state.step === "asking_city") {
-        let cityLower = text.toLowerCase();
-        if (cityLower === "quito" || cityLower === "guayaquil" || cityLower === "cuenca") {
-            state.city = cityLower;
-        } else {
-            state.city = "quito";
-            replyWithTyping("No reconocí esa ciudad. Usaremos Quito como referencia. 😊");
-            await new Promise(r => setTimeout(r, 800));
-        }
-        
-        // MEJORA: Pasamos duration y city a la IA
-        const aiResult = await getSpecialtyFromAI(state.symptom, state.sex, state.age, state.duration, state.city);
-        state.specialty = aiResult.specialty;
-        await showFinalResults(aiResult);
-    } else if (state.step === "finished") {
-        replyWithTyping("Presiona 'Nueva consulta' para iniciar otra consulta o escribe 'nuevo'.");
-    }
-}
+INSTRUCCIONES ESTRICTAS:
+1. Elige UNA especialidad de esta lista exacta:
+   Alergología, Cardiología, Dermatología, Endocrinología, Gastroenterología, Ginecología, Infectología, Medicina General, Neumología, Neurología, Odontología, Otorrinolaringología, Psiquiatría, Psicología, Urología, Traumatología, Reumatología, Oftalmología, Oncología, Pediatría, Geriatría, Nefrología, Hematología.
 
-// ========== REINICIAR CONVERSACIÓN ==========
-function resetChat() {
-    state = { step: "symptom", symptom: "", sex: null, age: null, duration: null, city: null, specialty: null };
-    conversationHistory = [];
-    while (msgDiv.children.length > 1) msgDiv.removeChild(msgDiv.lastChild);
-    replyWithTyping("🔄 Conversación reiniciada. Cuéntame tu síntoma principal.");
-}
+2. Determina la urgencia:
+   - 🔴 URGENTE: dolor pecho, dificultad respiratoria, desmayo, convulsiones, sangrado abundante, pérdida de conciencia.
+   - 🟡 PRIORIDAD MEDIA: fiebre alta, mareos, dolor de cabeza intenso, vómitos persistentes, dolor abdominal fuerte.
+   - 🟢 PRIORIDAD BAJA: síntomas leves o crónicos sin riesgo inmediato.
 
-// ========== EVENTOS ==========
-sendBtn.onclick = () => { let v = userInput.value.trim(); if (v) processInput(v); userInput.value = ""; };
-resetBtn.onclick = () => resetChat();
-userInput.addEventListener("keypress", e => { if (e.key === "Enter") sendBtn.click(); });
-userInput.focus();
-</script>
-</body>
-</html>
+3. Recomienda entre 2 y 4 documentos útiles.
+
+4. Si la edad es menor de 13 años, la especialidad DEBE ser "Pediatría".
+
+RESPONDE ÚNICAMENTE CON ESTE JSON (sin texto adicional):
+{
+  "message": "resumen breve y empático (1-2 frases)",
+  "next_action": "show_results",
+  "specialty": "especialidad elegida",
+  "urgency": "🔴 U
